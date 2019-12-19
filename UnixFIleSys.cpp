@@ -10,15 +10,17 @@
 // 初始化数据
 void UnixFIleSys :: initGlobal(FILE* f) {
     cout << "现在开始初始化数据" << endl;
+    // 初始化超级块
     sp -> size = DISK_SIZE;
     sp -> freeBlockNum = BLOCK_NUM; // 初始所有的盘块都为空闲盘块
     sp -> freeINodeNum = INODE_NUM - 1;
     for (int j = 0; j < INODE_NUM; j ++)
         sp -> freeINode[j] = INODE_NUM + 1 - j; // 暂时理解为算偏移量
-    sp -> nextFreeINode = INODE_NUM - 2;
+    sp -> nextFreeINode = INODE_NUM - 2; // 下一个空闲第三个
 
-    root -> parent = nullptr;
-    root -> nodeId = 2;
+    // 初始化根INode
+    root -> parent = nullptr; // 根目录的父目录为空
+    root -> nodeId = 2;       // 不是很懂
     root -> users = 1;
     time_t now;
     now = time(nullptr);
@@ -28,50 +30,64 @@ void UnixFIleSys :: initGlobal(FILE* f) {
     root -> dINode.linkNum = 0;
     root -> dINode.mod = 14;
     root -> dINode.modifyTime = now;
-    root -> dINode.ownerId = 0;
+    root -> dINode.ownerId = 1;
     root -> dINode.readTime = now;
 
+    // 初始化用户
     os -> ownerNum = 2;
     os -> os[0].ownerId = 1;
     os -> os[0].groupId = 1;
-    os -> os[0].ownerName = "coderTT";
-    os -> os[0].ownerPassword = "123456";
+    os -> os[0].ownerName = "osfinal";
+    os -> os[0].ownerPassword = "osfinal";
     os -> os[1].ownerId = 2;
     os -> os[1].groupId = 2;
-    os -> os[1].ownerName = "TT";
-    os -> os[1].ownerPassword = "123456";
+    os -> os[1].ownerName = "osfinal2";
+    os -> os[1].ownerPassword = "osfinal2";
 
+    // 初始化用户组
     gs -> groupNum = 2;
     gs -> gs[0].groupId = 1;
     gs -> gs[0].groupName = "zjut";
     gs -> gs[1].groupId = 2;
-    gs -> gs[1].groupName = "zjwz";
+    gs -> gs[1].groupName = "zjut2";
 
-    f = fopen(FILE_PATH,"wb");
-    int bGs = BLOCK_NUM / BLOCK_GROUP_SIZE;
+
+    f = fopen(FILE_PATH,"wb"); // wb - 只写打开或新建一个二进制文件
+
+
+    // 不是很懂
+    int bGs = BLOCK_NUM / BLOCK_GROUP_SIZE; // 有多少盘块组
     int left = BLOCK_NUM - bGs * BLOCK_GROUP_SIZE;
 
-    fseek(f, DISK_SIZE, 0);
-    fwrite("?", 1, 1, f);
+    // 重定位流指针到磁盘末尾，并写入一个"?"字符串(那为什么要这样做呢)
+    fseek(f, DISK_SIZE, SEEK_SET); // 重定位流上的文件指针
+                                   // int fseek(FILE *stream, long offset, int fromwhere);
+                                   // 描述: 函数设置文件指针stream的位置。如果执行成功，stream将指向以fromwhere为基准，偏移offset个字节的位置
+    fwrite("?", 1, 1, f); // fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
+                                               // ptr -- 这是指向要被写入的元素数组的指针。
+                                               // size -- 这是要被写入的每个元素的大小，以字节为单位。
+                                               // nmemb -- 这是元素的个数，每个元素的大小为 size 字节。
+                                               // stream -- 这是指向 FILE 对象的指针，该 FILE 对象指定了一个输出流
     if (left == 0) {
         for (int i = 0; i < BLOCK_GROUP_SIZE; i ++)
-            sp -> freeBlock[i] = BLOCK_START + BLOCK_GROUP_SIZE - 1 - i;
-        sp -> nextFreeBlock = BLOCK_GROUP_SIZE - 1;
+            sp -> freeBlock[i] = BLOCK_START + BLOCK_GROUP_SIZE - 1 - i; // 计算偏移数
+        sp -> nextFreeBlock = BLOCK_GROUP_SIZE - 1; // 下一个空闲盘块的偏移数
 
         for (int j = 0; j < bGs; j ++) {
             unsigned int blocksNum = BLOCK_GROUP_SIZE;
             unsigned int blocks[BLOCK_GROUP_SIZE];
             for (int k = 0; k < BLOCK_GROUP_SIZE; k ++)
-                blocks[k] = left + BLOCK_START + BLOCK_GROUP_SIZE * (j + 1) - k - 1;
+                blocks[k] = left + BLOCK_START + BLOCK_GROUP_SIZE * (j + 1) - k - 1; // 偏移数
             fseek(f, BLOCK_SIZE * (left + BLOCK_START + BLOCK_GROUP_SIZE * j - 1), SEEK_SET);
+            // 为什么要写入BLOCK_GROUP_SIZE
             fwrite(&blocksNum, sizeof(blocksNum), 1, f);
-            fwrite(&blocks,sizeof(blocks), 1, f);
+            fwrite(&blocks, sizeof(blocks), 1, f);
         }
         unsigned int blocksNum = 0;
         unsigned int blocks[BLOCK_GROUP_SIZE];
         fseek(f, BLOCK_SIZE * (left + BLOCK_START + BLOCK_GROUP_SIZE * bGs - 1), SEEK_SET);
         fwrite(&blocksNum, sizeof(blocksNum), 1, f);
-        fwrite(&blocks,sizeof(blocks), 1, f);
+        fwrite(&blocks, sizeof(blocks), 1, f);
     } else {
         for (int i = 0; i < left; i ++)
             sp -> freeBlock[i] = BLOCK_START + left - 1 - i;
@@ -92,25 +108,32 @@ void UnixFIleSys :: initGlobal(FILE* f) {
         fwrite(&blocksNum, sizeof(blocksNum), 1, f);
         fwrite(&blocks, sizeof(blocks), 1, f);
     }
-    fseek(f, BLOCK_SIZE,SEEK_SET);
-    fwrite(sp, sizeof(SuperBlock), 1, f);	//д??superBlock
-    fwrite(os, sizeof(Owners), 1, f);		//д???????
-    fwrite(gs, sizeof(Groups), 1, f);		//д???鼯??
-    fseek(f, BLOCK_SIZE *root -> nodeId, SEEK_SET);	//д?????iNode
+
+
+    fseek(f, BLOCK_SIZE, SEEK_SET); // 定位到超级块的位置（一个BLOCK_SIZE之后）
+    cout << 1 << endl;
+    fwrite(sp, sizeof(SuperBlock), 1, f);
+    fwrite(os, sizeof(Owners), 1, f);
+    fwrite(gs, sizeof(Groups), 1, f);
+    fseek(f, BLOCK_SIZE *root -> nodeId, SEEK_SET);  // BLOCK_SIZE *root -> nodeId不懂这个是什么意思
+    cout << 2 << endl;
     fwrite(&root -> dINode, sizeof(DINode), 1, f);
     fclose(f);
     auto* dt = new Direct();
     dt -> iNodeId = 2;
     dt -> name = "root";
     ds.push_back(dt);
-    superMkdir(root, "coderTT", 1, 1);
-    superMkdir(root, "TT", 2, 2);
+    cout << 3 << endl;
+    superMkdir(root, "test1", 1, 1);
+    cout << 4 << endl;
+    superMkdir(root, "test2", 2, 2);
+
+    cout << "初始化数据成功！" << endl;
 }
 
 
 void UnixFIleSys :: initSystem() {
     FILE *f = fopen(FILE_PATH,"rb");
-    // f = nullptr;
     if(f == nullptr) {
         cout << "系统暂无数据" << endl;
         initGlobal(f);
@@ -124,7 +147,7 @@ void UnixFIleSys :: initSystem() {
         root -> users = 2;
         fseek(f, BLOCK_SIZE * root -> nodeId, SEEK_SET);
         fread(&root -> dINode, sizeof(DINode), 1, f);
-        Direct* dt = new Direct();
+        auto* dt = new Direct();
         dt -> iNodeId = 2;
         dt -> name = "root";
         ds.push_back(dt);
@@ -214,6 +237,7 @@ bool UnixFIleSys :: readNextBG() {
 
 
 int UnixFIleSys :: mkdir(INode* parent, const string& name) {
+    cout << "您要创建的目录名是" + name << endl;
     bool exist = checkFileName(name);
     if (parent -> dINode.fileSize == 0 && parent -> dINode.mod != 12 && !exist && (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int blockId = getFreeBlock();
@@ -231,8 +255,8 @@ int UnixFIleSys :: mkdir(INode* parent, const string& name) {
                 parent -> dINode.addr[0] = blockId;
                 writeINode(parent);
                 Direct *dt = new Direct();
-                dt->name = name;
-                dt->iNodeId = iNodeId;
+                dt -> name = name;
+                dt -> iNodeId = iNodeId;
                 DINode *di = new DINode();
                 di -> createTime = now;
                 di -> fileSize = 0;
@@ -249,9 +273,9 @@ int UnixFIleSys :: mkdir(INode* parent, const string& name) {
                 i.users = parent -> users;
                 writeINode(&i);
                 Dir	dd;
-                dd.dirNum=1;
-                dd.direct[0]=*dt;
-                writeDir(blockId,&dd);
+                dd.dirNum = 1;
+                dd.direct[0] = *dt;
+                writeDir(blockId, &dd);
                 //delete dd;
                 *d = dd;
                 delete di;
@@ -347,7 +371,7 @@ int UnixFIleSys :: login() {
     cout << endl;
     string un;
     un = userName;
-    cout << "总共有" << os -> ownerNum << "个用户" << endl;
+    // cout << "总共有" << os -> ownerNum << "个用户" << endl;
     for (int j = 0; j < os -> ownerNum; j ++) {
         cout << os -> os[j].ownerName << "     " << os -> os[j].ownerPassword << endl;
         if (un == os -> os[j].ownerName && password == os -> os[j].ownerPassword) {
@@ -370,8 +394,10 @@ void UnixFIleSys :: commandDispatcher() {
     int flag = -1;
     int subPos = command.find_first_of(" ");
     if (subPos == -1) {
-        if (command == "ls")
+        if (command == "ls") {
+            cout << "命令为ls" << endl;
             flag = 1;
+        }
         else if (command == "pwd")
             flag=5;
         else if (command == "passwd")
@@ -786,7 +812,7 @@ void UnixFIleSys :: commandDispatcher() {
 }
 
 void UnixFIleSys :: displayCommands() {
-    cout<<"ls		????????"<<endl;
+    cout<<"ls		展示当前目录下的文件或目录"<<endl;
     cout<<"chmod		?????????"<<endl;
     cout<<"chown		???????????"<<endl;
     cout<<"chgrp		????????????"<<endl;
@@ -804,7 +830,7 @@ void UnixFIleSys :: displayCommands() {
     cout<<">>		??????????"<<endl;
 }
 
-
+// 展示当前目录
 string UnixFIleSys :: pwd() {
     string path;
     for (int i = 0; i < ds.size(); i ++) {
@@ -830,7 +856,7 @@ int UnixFIleSys :: readCurDir() {
         if (curINode -> dINode.fileSize == 0)
             d -> dirNum = 0;
         else {
-            fseek(f, BLOCK_SIZE *curINode -> dINode.addr[0], SEEK_SET);
+            fseek(f, BLOCK_SIZE * curINode -> dINode.addr[0], SEEK_SET);
             fread(d, sizeof(Dir), 1, f);
             fclose(f);
         }
@@ -840,6 +866,14 @@ int UnixFIleSys :: readCurDir() {
 
 string UnixFIleSys :: ls() {
     string ls;
+
+    cout << "测试打印目录有多少内容" << endl;
+    cout << "num:" << d -> dirNum << endl;
+    for (int i = 0; i < d -> dirNum; i++) {
+        cout <<  d -> direct[i].name << endl;
+    }
+    cout << "测试打印结束" << endl;
+
     for (int i = 0; i < d -> dirNum; i++) {
         ls += d -> direct[i].name;
         ls += " ";
@@ -847,19 +881,23 @@ string UnixFIleSys :: ls() {
     return ls;
 }
 
-bool UnixFIleSys :: checkFileName(string name) {
+int UnixFIleSys :: checkFileName(string name) {
     FILE *f = fopen(FILE_PATH, "rb");
-    if (f == NULL)
-        return true;
-    else {
+    if (f == NULL) {
+        cout << "f不存在" << endl;
+        return 1;
+    } else {
+        cout << "f存在" << endl;
         Dir d;
-        fseek(f, BLOCK_SIZE *curINode -> dINode.addr[0], SEEK_SET);
+        // d.dirNum = 0;
+        fseek(f, BLOCK_SIZE * curINode -> dINode.addr[0], SEEK_SET);
         fread(&d, sizeof(Dir), 1, f);
         fclose(f);
         for (int i = 0; i < d.dirNum; i ++)
             if(d.direct[i].name == name)
-                return true;
-        return false;
+                return 1;
+        cout << "应该直接返回false" << endl;
+        return 0;
     }
 }
 
@@ -915,7 +953,10 @@ int UnixFIleSys :: cd(string name) {
 
 
 int UnixFIleSys :: superMkdir(INode* parent, string name, unsigned short ownerId, unsigned short groupId) {
-    bool exist = checkFileName(name);
+    cout << "要创建的name是：" << name << endl;
+    int exist = checkFileName(name);
+    cout << "文件名检验结果为" << endl;
+    // cout << checkFileName(name) << endl;
     if (parent -> dINode.fileSize == 0) {
         int blockId = getFreeBlock();
         if (blockId < 0)

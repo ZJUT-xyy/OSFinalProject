@@ -18,14 +18,14 @@ using namespace std;
 
 class UnixFIleSys {
 
-    SuperBlock *sp=new SuperBlock();		//????????????
-    INode *root=new INode();				//??????????
-    Owners *os=new Owners();		//???????????
-    Groups *gs=new Groups();		//?鼯????????
-    Owner *curOwner;		//??????
-    INode *curINode=root;			//???iNode
-    vector<Direct*> ds;				//???·??????
-    Dir* d=new Dir();
+    SuperBlock *sp = new SuperBlock();
+    INode *root = new INode();
+    Owners *os = new Owners();
+    Groups *gs = new Groups();
+    Owner *curOwner;
+    INode *curINode = root;
+    vector<Direct*> ds; // 记录所进入的目录
+    Dir* d = new Dir();
 
 public:
     // 全局初始化
@@ -65,7 +65,7 @@ public:
     // 返回当前目录清单字符串
     string ls();
     // 校验文件名
-    bool checkFileName(string name);
+    int checkFileName(string name);
     // 切换工作目录
     int cd(string name);
     // 创建用户目录
@@ -108,6 +108,7 @@ public:
     int cp(string source, string des);
     // 获取文件内容字符串
     string getText(INode* temp);
+
 };
 
 #endif //OSFINAL1_UNIXFILESYS_H
