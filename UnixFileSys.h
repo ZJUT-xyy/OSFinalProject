@@ -45,7 +45,7 @@ public:
     // 读下一组盘块组
     bool readNextBG();
     // 创建目录
-    int mkdir(INode* parent, const string& name);
+    int mkdir(INode* parent, char name[MAX_NAME_SIZE]);
     // 获取空闲盘块
     int getFreeBlock();
     // 获取空闲INode节点
@@ -65,50 +65,49 @@ public:
     // 返回当前目录清单字符串
     string ls();
     // 校验文件名
-    int checkFileName(string name);
+    int checkFileName(char name[MAX_NAME_SIZE]);
     // 切换工作目录
-    int cd(string name);
+    int cd(char name[MAX_NAME_SIZE]);
     // 创建用户目录
-    int superMkdir(INode* parent, string name, unsigned short ownerId, unsigned short groupId);
+    int superMkdir(INode* parent,char name[MAX_NAME_SIZE],unsigned short ownerId,unsigned short groupId);
     // 改变文件权限
-    int chmod(string name, unsigned int mod);
+    int chmod(char name[MAX_NAME_SIZE],unsigned int mod);
     // 改变文件拥有者
-    int chown(string name, unsigned short ownerId);
+    int chown(char name[MAX_NAME_SIZE],unsigned short ownerId);
     // 改变文件所属者
-    int chgrp(string name, unsigned short groupId);
+    int chgrp(char name[MAX_NAME_SIZE],unsigned short groupId);
     // 更改当前用户密码
     int passwd();
     // 写入用户组信息
     bool writeOS();
     // 修改文件名
-    int mv(string oldName, string newName);
+    int mv(char oldName[MAX_NAME_SIZE],char newName[MAX_NAME_SIZE]);
     // 创建新文件
-    int touch(INode* parent, string name);
+    int touch(INode* parent,char name[MAX_NAME_SIZE]);
     // 写入文件内容
-    int writeText(INode* temp, string text);
+    int writeText(INode* temp,string text);
     // 文件内容追加
-    int textAppend(string name);
+    int textAppend(char name[MAX_NAME_SIZE]);
     // 显示文件内容
-    int cat(string name);
+    int cat(char name[MAX_NAME_SIZE]);
     // 读取文件内容
     int readText(INode *temp);
     // 删除文件
-    int rm(string name);
+    int rm(char name[MAX_NAME_SIZE]);
     // 回收空闲盘块
     int returnFreeBlock(unsigned int blockId);
     // 回收空闲节点Inode
     int returnFreeINode(unsigned int iNodeId);
     // 链接源文件至目标文件
-    int ln(string source, string des);
+    int ln(char source[MAX_NAME_SIZE],char des[MAX_NAME_SIZE]);
     // 迭代初除目录下所有内容
     void rmIter(unsigned short iNodeId);
     // 删除目录操作
-    int rmdir(string name);
+    int rmdir(char name[MAX_NAME_SIZE]);
     // 复制源文件至目标文件
-    int cp(string source, string des);
+    int cp(char source[MAX_NAME_SIZE],char des[MAX_NAME_SIZE]);
     // 获取文件内容字符串
     string getText(INode* temp);
-
 };
 
 #endif //OSFINAL1_UNIXFILESYS_H

@@ -37,25 +37,22 @@ void UnixFIleSys :: initGlobal(FILE* f) {
     os -> ownerNum = 2;
     os -> os[0].ownerId = 1;
     os -> os[0].groupId = 1;
-    os -> os[0].ownerName = "osfinal";
-    os -> os[0].ownerPassword = "osfinal";
+    strcpy(os -> os[0].ownerName, "osfinal");
+    strcpy(os -> os[0].ownerPassword, "osfinal");
     os -> os[1].ownerId = 2;
     os -> os[1].groupId = 2;
-    os -> os[1].ownerName = "osfinal2";
-    os -> os[1].ownerPassword = "osfinal2";
+    strcpy(os -> os[1].ownerName, "osfinal2");
+    strcpy(os -> os[1].ownerPassword, "osfinal2");
 
     // 初始化用户组
     gs -> groupNum = 2;
     gs -> gs[0].groupId = 1;
-    gs -> gs[0].groupName = "zjut";
+    strcpy(gs -> gs[0].groupName, "zjut");
     gs -> gs[1].groupId = 2;
-    gs -> gs[1].groupName = "zjut2";
-
+    strcpy(gs -> gs[1].groupName, "zjut2");
 
     f = fopen(FILE_PATH,"wb"); // wb - 只写打开或新建一个二进制文件
 
-
-    // 不是很懂
     int bGs = BLOCK_NUM / BLOCK_GROUP_SIZE; // 有多少盘块组
     int left = BLOCK_NUM - bGs * BLOCK_GROUP_SIZE;
 
@@ -111,24 +108,25 @@ void UnixFIleSys :: initGlobal(FILE* f) {
 
 
     fseek(f, BLOCK_SIZE, SEEK_SET); // 定位到超级块的位置（一个BLOCK_SIZE之后）
-    cout << 1 << endl;
     fwrite(sp, sizeof(SuperBlock), 1, f);
     fwrite(os, sizeof(Owners), 1, f);
     fwrite(gs, sizeof(Groups), 1, f);
     fseek(f, BLOCK_SIZE *root -> nodeId, SEEK_SET);  // BLOCK_SIZE *root -> nodeId不懂这个是什么意思
-    cout << 2 << endl;
     fwrite(&root -> dINode, sizeof(DINode), 1, f);
     fclose(f);
     auto* dt = new Direct();
     dt -> iNodeId = 2;
-    dt -> name = "root";
+    strcpy(dt -> name, "root");
     ds.push_back(dt);
-    cout << 3 << endl;
     superMkdir(root, "test1", 1, 1);
-    cout << 4 << endl;
     superMkdir(root, "test2", 2, 2);
 
     cout << "初始化数据成功！" << endl;
+
+    cout << "总共有" << os -> ownerNum << "个用户" << endl;
+    for (int j = 0; j < os -> ownerNum; j ++)
+        cout << os -> os[j].ownerName << endl;
+
 }
 
 
@@ -149,7 +147,7 @@ void UnixFIleSys :: initSystem() {
         fread(&root -> dINode, sizeof(DINode), 1, f);
         auto* dt = new Direct();
         dt -> iNodeId = 2;
-        dt -> name = "root";
+        strcpy(dt -> name, "root");
         ds.push_back(dt);
         fclose(f);
         readCurDir();
@@ -236,8 +234,9 @@ bool UnixFIleSys :: readNextBG() {
 }
 
 
-int UnixFIleSys :: mkdir(INode* parent, const string& name) {
-    cout << "您要创建的目录名是" + name << endl;
+// 创建文件夹
+int UnixFIleSys :: mkdir(INode* parent, char name[MAX_NAME_SIZE]) {
+    // cout << "您要创建的目录名是" + name << endl;
     bool exist = checkFileName(name);
     if (parent -> dINode.fileSize == 0 && parent -> dINode.mod != 12 && !exist && (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int blockId = getFreeBlock();
@@ -255,7 +254,7 @@ int UnixFIleSys :: mkdir(INode* parent, const string& name) {
                 parent -> dINode.addr[0] = blockId;
                 writeINode(parent);
                 Direct *dt = new Direct();
-                dt -> name = name;
+                strcpy(dt -> name, name);
                 dt -> iNodeId = iNodeId;
                 DINode *di = new DINode();
                 di -> createTime = now;
@@ -292,7 +291,7 @@ int UnixFIleSys :: mkdir(INode* parent, const string& name) {
             now = time(NULL);
             parent -> dINode.modifyTime = now;
             Direct *dt = new Direct();
-            dt -> name = name;
+            strcpy(dt -> name, name);
             dt -> iNodeId = iNodeId;
             DINode *di = new DINode();
             di -> createTime = now;
@@ -364,22 +363,36 @@ int UnixFIleSys :: login() {
     string userName;
     cin >> userName;
     cout << "please input your password:";
-    string password;
-    cin >> password;
-    // 限制12字符
-    password = password.substr(0,12);
-    cout << endl;
-    string un;
-    un = userName;
-    // cout << "总共有" << os -> ownerNum << "个用户" << endl;
+    char password[MAX_NAME_SIZE]={0};
+    int i=0;
+    while (i < MAX_NAME_SIZE) {
+        password[i] = getchar();
+        if (password[i] == '\n' && i == 0) i = -1;
+        if (i != -1 && password[i] == '\n') {
+            cout << "检测到换行" << endl;
+            for (int j = i; j <= 13; j ++) {
+                password[j]='\0';
+            }
+            break;
+        }
+        if (password[i] == 13) {
+            password[i]='\0';
+            break;
+        }
+        i++;
+    }
+    cout<<endl;
+    char un[MAX_NAME_SIZE];
+    strcpy(un, userName.c_str());
     for (int j = 0; j < os -> ownerNum; j ++) {
-        cout << os -> os[j].ownerName << "     " << os -> os[j].ownerPassword << endl;
-        if (un == os -> os[j].ownerName && password == os -> os[j].ownerPassword) {
-            curOwner = &os -> os[j];
+        int flag = strcmp(un, os->os[j].ownerName);
+        int flag2 = strcmp(password, os->os[j].ownerPassword);
+        if (strcmp(un, os->os[j].ownerName) == 0 && strcmp(password, os->os[j].ownerPassword) == 0) {
+            curOwner = &os->os[j];
             return STATUS_OK;
         }
     }
-    cout<<"UserName or Password Wrong!!!"<<endl;
+    cout << "UserName or Password Wrong!!!" << endl;
     return login();
 }
 
@@ -395,7 +408,6 @@ void UnixFIleSys :: commandDispatcher() {
     int subPos = command.find_first_of(" ");
     if (subPos == -1) {
         if (command == "ls") {
-            cout << "命令为ls" << endl;
             flag = 1;
         }
         else if (command == "pwd")
@@ -453,8 +465,8 @@ void UnixFIleSys :: commandDispatcher() {
                     cout << "Error pattern..." << endl;
                 else {
                     unsigned short m = atoi(mod.c_str());
-                    string name;
-                    name = fileName;
+                    char name[MAX_NAME_SIZE];
+                    strcpy(name,fileName.c_str());
                     int result = chmod(name, m);
                     if (result == STATUS_MOD_ERROR)
                         cout << "Error: Pattern is illegal..." << endl;
@@ -481,8 +493,8 @@ void UnixFIleSys :: commandDispatcher() {
                     cout << "Error pattern..." << endl;
                 else {
                     unsigned short oi = atoi(ownerId.c_str());
-                    string name;
-                    name = fileName;
+                    char name[MAX_NAME_SIZE];
+                    strcpy(name, fileName.c_str());
                     int result = chown(name, oi);
                     if (result == STATUS_OWNER_NONEXIST)
                         cout << "Error: OwnerId is nonexisted..." << endl;
@@ -509,8 +521,8 @@ void UnixFIleSys :: commandDispatcher() {
                     cout << "Error pattern..." << endl;
                 else {
                     unsigned short gi = atoi(groupId.c_str());
-                    string name;
-                    name = fileName;
+                    char name[MAX_NAME_SIZE];
+                    strcpy(name,fileName.c_str());
                     int result = chgrp(name, gi);
                     if (result == STATUS_GROUP_NONEXIST)
                         cout << "Error: GroupId is nonexisted..." << endl;
@@ -533,8 +545,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error DirectName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name, fileName.c_str());
                 int result = cd(name);
                 if (result == STATUS_FILENAME_NONEXIST)
                     cout << "Error: Dir is not existed..." << endl;
@@ -550,8 +562,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error FileName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name, fileName.c_str());
                 int result = mkdir(curINode, name);
                 if(result == STATUS_NO_BLOCK)
                     cout << "Error: No Free Block..." << endl;
@@ -577,8 +589,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error FileName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name, fileName.c_str());
                 int result = rmdir(name);
                 if (result == STATUS_NOT_DIRECT)
                     cout << "Error: Not a direct..." << endl;
@@ -603,10 +615,10 @@ void UnixFIleSys :: commandDispatcher() {
                 if (subPos3 != -1)
                     cout << "Error pattern..." << endl;
                 else {
-                    string oldName1;
-                    oldName1 = oldName;
-                    string newName1;
-                    newName1 = newName;
+                    char oldName1[MAX_NAME_SIZE];
+                    strcpy(oldName1, oldName.c_str());
+                    char newName1[MAX_NAME_SIZE];
+                    strcpy(newName1, newName.c_str());
                     int result = mv(oldName1, newName1);
                     if (result == STATUS_FILENAME_NONEXIST)
                         cout << "Error: FileName is nonexisted..." << endl;
@@ -632,10 +644,10 @@ void UnixFIleSys :: commandDispatcher() {
                 if (subPos3 != -1)
                     cout << "Error pattern..." << endl;
                 else {
-                    string s;
-                    s = source;
-                    string d;
-                    d = des;
+                    char s[MAX_NAME_SIZE];
+                    strcpy(s, source.c_str());
+                    char d[MAX_NAME_SIZE];
+                    strcpy(d, des.c_str());
                     int result = cp(s, d);
                     if (result == STATUS_FILENAME_NONEXIST)
                         cout << "Error: FileName doesn't exist..." << endl;
@@ -662,8 +674,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error FileName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name, fileName.c_str());
                 int result = rm(name);
                 if (result == STATUS_NOT_FILE)
                     cout << "Error: Not a file..." << endl;
@@ -688,10 +700,10 @@ void UnixFIleSys :: commandDispatcher() {
                 if (subPos3 != -1)
                     cout << "Error pattern..." << endl;
                 else {
-                    string s;
-                    s = source;
-                    string d;
-                    d = des;
+                    char s[MAX_NAME_SIZE];
+                    strcpy(s, source.c_str());
+                    char d[MAX_NAME_SIZE];
+                    strcpy(d, des.c_str());
                     int result = ln(s, d);
                     if (result == STATUS_BEYOND_RIGHT)
                         cout << "Error: Beyond your right..." << endl;
@@ -712,8 +724,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error FileName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name, fileName.c_str());
                 int result = cat(name);
                 if (result == STATUS_BEYOND_RIGHT)
                     cout << "Error: Beyond your right..." << endl;
@@ -745,8 +757,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error FileName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name,fileName.c_str());
                 int result = touch(curINode, name);
                 if (result == STATUS_NO_BLOCK)
                     cout << "Error: No Free Block..." << endl;
@@ -772,8 +784,8 @@ void UnixFIleSys :: commandDispatcher() {
             if (subPos2 != -1)
                 cout << "Error FileName..." << endl;
             else {
-                string name;
-                name = fileName;
+                char name[MAX_NAME_SIZE];
+                strcpy(name, fileName.c_str());
                 int result = textAppend(name);
                 if (result == STATUS_BEYOND_RIGHT)
                     cout << "Error: Byond your right..." << endl;
@@ -812,22 +824,22 @@ void UnixFIleSys :: commandDispatcher() {
 }
 
 void UnixFIleSys :: displayCommands() {
-    cout<<"ls		展示当前目录下的文件或目录"<<endl;
-    cout<<"chmod		?????????"<<endl;
-    cout<<"chown		???????????"<<endl;
-    cout<<"chgrp		????????????"<<endl;
-    cout<<"pwd		????????"<<endl;
-    cout<<"cd		??????"<<endl;
-    cout<<"mkdir		????????"<<endl;
-    cout<<"rmdir		???????"<<endl;
-    cout<<"mv		????????"<<endl;
-    cout<<"cp		???????"<<endl;
-    cout<<"rm		??????"<<endl;
-    cout<<"ln		???????????"<<endl;
-    cout<<"cat		??????????????"<<endl;
-    cout<<"passwd		??????????"<<endl;
-    cout<<"touch		???????"<<endl;
-    cout<<">>		??????????"<<endl;
+    cout<<"ls		显示目录文件"<<endl;
+    cout<<"chmod		改变文件权限"<<endl;
+    cout<<"chown		改变文件拥有者"<<endl;
+    cout<<"chgrp		改变文件所属组"<<endl;
+    cout<<"pwd		显示当前目录"<<endl;
+    cout<<"cd		改变当前目录"<<endl;
+    cout<<"mkdir		创建子目录"<<endl;
+    cout<<"rmdir		删除子目录"<<endl;
+    cout<<"mv		改变文件名"<<endl;
+    cout<<"cp		文件拷贝"<<endl;
+    cout<<"rm		文件删除"<<endl;
+    cout<<"ln		建立文件联接"<<endl;
+    cout<<"cat		连接显示文件内容"<<endl;
+    cout<<"passwd		修改用户口令"<<endl;
+    cout<<"touch		创建文件"<<endl;
+    cout<<">>		文本内容追加"<<endl;
 }
 
 // 展示当前目录
@@ -867,13 +879,6 @@ int UnixFIleSys :: readCurDir() {
 string UnixFIleSys :: ls() {
     string ls;
 
-    cout << "测试打印目录有多少内容" << endl;
-    cout << "num:" << d -> dirNum << endl;
-    for (int i = 0; i < d -> dirNum; i++) {
-        cout <<  d -> direct[i].name << endl;
-    }
-    cout << "测试打印结束" << endl;
-
     for (int i = 0; i < d -> dirNum; i++) {
         ls += d -> direct[i].name;
         ls += " ";
@@ -881,32 +886,34 @@ string UnixFIleSys :: ls() {
     return ls;
 }
 
-int UnixFIleSys :: checkFileName(string name) {
+int UnixFIleSys :: checkFileName(char name[MAX_NAME_SIZE]) {
+    int flag = 0;
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == NULL) {
         cout << "f不存在" << endl;
-        return 1;
+        flag = 1;
+        return flag;
     } else {
-        cout << "f存在" << endl;
+        //cout << "f存在" << endl;
         Dir d;
         // d.dirNum = 0;
         fseek(f, BLOCK_SIZE * curINode -> dINode.addr[0], SEEK_SET);
         fread(&d, sizeof(Dir), 1, f);
         fclose(f);
+        //cout << "现在所在的目录的目录项数为" << d.dirNum << endl;
         for (int i = 0; i < d.dirNum; i ++)
-            if(d.direct[i].name == name)
-                return 1;
-        cout << "应该直接返回false" << endl;
-        return 0;
+            if(strcmp(d.direct[i].name, name) == 0)
+                flag = 1;
+        return flag;
     }
 }
 
-int UnixFIleSys :: cd(string name) {
+int UnixFIleSys :: cd(char name[MAX_NAME_SIZE]) {
     Direct *dt = new Direct();
-    if (name == "./") {
+    if (strcmp(name, "./") == 0) {
         delete dt;
         return STATUS_OK;
-    } else if (name == "../") {
+    } else if (strcmp(name, "../") == 0) {
         if (curINode -> parent != nullptr) {
             INode *temp = curINode;
             curINode = curINode -> parent;
@@ -923,7 +930,7 @@ int UnixFIleSys :: cd(string name) {
     else {
         bool dtExist = false;
         for (int i = 0; i < d -> dirNum; i ++)
-            if(d->direct[i].name == name) {
+            if (strcmp(d -> direct[i].name, name) == 0) {
                 *dt = d -> direct[i];
                 dtExist = true;
             }
@@ -952,11 +959,8 @@ int UnixFIleSys :: cd(string name) {
 
 
 
-int UnixFIleSys :: superMkdir(INode* parent, string name, unsigned short ownerId, unsigned short groupId) {
-    cout << "要创建的name是：" << name << endl;
+int UnixFIleSys :: superMkdir(INode* parent, char name[MAX_NAME_SIZE], unsigned short ownerId, unsigned short groupId) {
     int exist = checkFileName(name);
-    cout << "文件名检验结果为" << endl;
-    // cout << checkFileName(name) << endl;
     if (parent -> dINode.fileSize == 0) {
         int blockId = getFreeBlock();
         if (blockId < 0)
@@ -973,7 +977,7 @@ int UnixFIleSys :: superMkdir(INode* parent, string name, unsigned short ownerId
                 parent -> dINode.addr[0] = blockId;
                 writeINode(parent);
                 Direct *dt = new Direct();
-                dt -> name = name;
+                strcpy(dt -> name, name);
                 dt -> iNodeId = iNodeId;
                 DINode *di = new DINode();
                 di -> createTime = now;
@@ -1011,7 +1015,7 @@ int UnixFIleSys :: superMkdir(INode* parent, string name, unsigned short ownerId
             now = time(NULL);
             parent -> dINode.modifyTime = now;
             Direct *dt = new Direct();
-            dt -> name = name;
+            strcpy(dt -> name, name);
             dt -> iNodeId = iNodeId;
             DINode *di = new DINode();
             di -> createTime = now;
@@ -1046,9 +1050,9 @@ int UnixFIleSys :: superMkdir(INode* parent, string name, unsigned short ownerId
     return STATUS_ERROR;
 }
 
-int UnixFIleSys :: chmod(string name, unsigned int mod)	{
+int UnixFIleSys :: chmod(char name[MAX_NAME_SIZE], unsigned int mod)	{
     for (int i = 0; i < d -> dirNum; i ++)
-        if(d -> direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             if (mod == 8 || mod == 9 || mod == 11 || mod == 13 || mod > 14)
                 return STATUS_MOD_ERROR;
             else {
@@ -1077,9 +1081,9 @@ int UnixFIleSys :: chmod(string name, unsigned int mod)	{
     return STATUS_FILENAME_NONEXIST;
 }
 
-int UnixFIleSys :: chown(string name,  unsigned short ownerId) {
+int UnixFIleSys :: chown(char name[MAX_NAME_SIZE], unsigned short ownerId) {
     for (int i = 0; i < d -> dirNum; i ++)
-        if (d -> direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             for (int j = 0; j < os -> ownerNum; j ++)
                 if (ownerId == os -> os[j].ownerId) {
                     INode *temp = new INode();
@@ -1100,9 +1104,9 @@ int UnixFIleSys :: chown(string name,  unsigned short ownerId) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-int UnixFIleSys :: chgrp(string name, unsigned short groupId) {
+int UnixFIleSys :: chgrp(char name[MAX_NAME_SIZE], unsigned short groupId) {
     for (int i = 0; i < d -> dirNum; i ++)
-        if(d->direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             for (int j = 0; j < gs -> groupNum; j ++)
                 if (groupId == gs -> gs[j].groupId) {
                     INode *temp = new INode();
@@ -1125,32 +1129,51 @@ int UnixFIleSys :: chgrp(string name, unsigned short groupId) {
 
 int UnixFIleSys :: passwd() {
     cout << "please input your old password:";
-    string password;
-    cin >> password;
-    // 控制长度为12
-    password = password.substr(0, 12);
+    char password[MAX_NAME_SIZE] = {0};
+    int i = 0;
+    while (i < MAX_NAME_SIZE) {
+        password[i] = getchar();
+        if (password[i] == 13) {
+            password[i] = '\0';
+            break;
+        }
+        i ++;
+    }
     cout << endl;
-    if (curOwner -> ownerPassword != password)
+    if (strcmp(curOwner -> ownerPassword, password) != 0)
         return STATUS_PASSWORD_WRONG;
     else {
         cout << "please input your new password:";
-        string p1;
-        cin >> p1;
-        // 控制长度为12
-        p1.substr(0, 12);
+        char p1[MAX_NAME_SIZE] = {0};
+        int i = 0;
+        while(i < MAX_NAME_SIZE) {
+            p1[i] = getchar();
+            if (p1[i] == 13) {
+                p1[i] = '\0';
+                break;
+            }
+            i ++;
+        }
         cout << endl;
         cout << "please input confirm your new password:";
-        string p2;
-        // 控制长度为12
-        p2.substr(0, 12);
+        char p2[MAX_NAME_SIZE] = {0};
+        int j = 0;
+        while(j < MAX_NAME_SIZE) {
+            p2[j] = getchar();
+            if (p2[j] == 13) {
+                p2[j] = '\0';
+                break;
+            }
+            j ++;
+        }
         cout << endl;
-        if (p1 != p2)
+        if (strcmp(p1, p2) != 0)
             return STATUS_CONFIRM_WRONG;
         else {
-            curOwner -> ownerPassword = p1;
+            strcpy(curOwner -> ownerPassword, p1);
             for (int i = 0; i < os -> ownerNum; i ++)
                 if (os -> os[i].ownerName == curOwner -> ownerName) {
-                    os -> os[i].ownerPassword = p1;
+                    strcpy(os->os[i].ownerPassword, p1);
                     writeOS();
                     return STATUS_OK;
                 }
@@ -1171,9 +1194,9 @@ bool UnixFIleSys ::  writeOS() {
     }
 }
 
-int UnixFIleSys :: mv(string oldName, string newName) {
+int UnixFIleSys :: mv(char oldName[MAX_NAME_SIZE], char newName[MAX_NAME_SIZE]) {
     for (int i = 0; i < d -> dirNum; i++) {
-        if (d -> direct[i].name == oldName)  {
+        if (strcmp(d -> direct[i].name, oldName) == 0) {
             INode* temp = new INode();
             temp -> nodeId = d -> direct[i].iNodeId;
             readINode(temp);
@@ -1182,9 +1205,9 @@ int UnixFIleSys :: mv(string oldName, string newName) {
                 return STATUS_BEYOND_RIGHT;
             } else {
                 for (int j = 0; j < d -> dirNum; j ++)
-                    if (d -> direct[j].name == newName)
+                    if (strcmp(d -> direct[j].name, newName) == 0)
                         return STATUS_FILENAME_EXIST;
-                d -> direct[i].name = newName;
+                strcpy(d -> direct[i].name, newName);
                 writeDir(curINode -> dINode.addr[0], d);
                 delete temp;
                 return STATUS_OK;
@@ -1194,7 +1217,7 @@ int UnixFIleSys :: mv(string oldName, string newName) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-int UnixFIleSys :: touch(INode* parent, string name) {
+int UnixFIleSys :: touch(INode* parent, char name[MAX_NAME_SIZE]) {
     bool exist = checkFileName(name);
     if (parent -> dINode.fileSize == 0 && parent -> dINode.mod != 12 && !exist && (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int blockId=getFreeBlock();
@@ -1212,7 +1235,7 @@ int UnixFIleSys :: touch(INode* parent, string name) {
                 parent -> dINode.addr[0] = blockId;
                 writeINode(parent);
                 Direct *dt = new Direct();
-                dt -> name = name;
+                strcpy(dt -> name, name);
                 dt -> iNodeId = iNodeId;
                 DINode *di = new DINode();
                 di -> createTime = now;
@@ -1249,7 +1272,7 @@ int UnixFIleSys :: touch(INode* parent, string name) {
             now = time(NULL);
             parent -> dINode.modifyTime = now;
             Direct *dt = new Direct();
-            dt -> name = name;
+            strcpy(dt->name, name);
             dt -> iNodeId = iNodeId;
             DINode *di = new DINode();
             di -> createTime = now;
@@ -1291,9 +1314,9 @@ int UnixFIleSys :: touch(INode* parent, string name) {
     return STATUS_ERROR;
 }
 
-int UnixFIleSys :: textAppend(string name)	{
+int UnixFIleSys :: textAppend(char name[MAX_NAME_SIZE])	{
     for (int i = 0; i < d -> dirNum; i ++) {
-        if (d -> direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             INode* temp = new INode();
             temp -> nodeId = d -> direct[i].iNodeId;
             readINode(temp);
@@ -1419,9 +1442,9 @@ int UnixFIleSys :: writeText(INode* temp, string text) {
     }
 }
 
-int UnixFIleSys :: cat(string name) {
+int UnixFIleSys :: cat(char name[MAX_NAME_SIZE]) {
     for (int i = 0;i < d -> dirNum; i ++)
-        if (d -> direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             INode *temp = new INode();
             temp -> nodeId = d -> direct[i].iNodeId;
             readINode(temp);
@@ -1464,9 +1487,9 @@ int UnixFIleSys :: readText(INode *temp) {
     }
 }
 
-int UnixFIleSys :: rm(string name) {
+int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
     for (int i = 0; i < d -> dirNum; i ++)
-        if (d -> direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             INode *temp = new INode();
             temp -> nodeId = d -> direct[i].iNodeId;
             readINode(temp);
@@ -1565,12 +1588,12 @@ int UnixFIleSys :: returnFreeINode(unsigned int iNodeId) {
     return STATUS_OK;
 }
 
-int UnixFIleSys :: ln(string source, string des) {
-    if (source == des)
+int UnixFIleSys :: ln(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
+    if (strcmp(source, des) == 0)
         return STATUS_SDNAME_OVERLAP;
     else
         for (int i = 0; i < d -> dirNum; i ++)
-            if(d -> direct[i].name == source) {
+            if(strcmp(d -> direct[i].name, source) == 0) {
                 INode *temp = new INode();
                 temp -> nodeId = d -> direct[i].iNodeId;
                 readINode(temp);
@@ -1579,7 +1602,7 @@ int UnixFIleSys :: ln(string source, string des) {
                     return STATUS_BEYOND_RIGHT;
                 } else {
                     for (int j = 0; j < d -> dirNum; j ++)
-                        if (d -> direct[j].name == des) {
+                        if (strcmp(d -> direct[j].name, des) == 0) {
                             INode* t = new INode();
                             t -> nodeId = d -> direct[j].iNodeId;
                             readINode(t);
@@ -1602,7 +1625,7 @@ int UnixFIleSys :: ln(string source, string des) {
                         }
                     Direct dt;
                     dt.iNodeId = d -> direct[i].iNodeId;
-                    dt.name = des;
+                    strcpy(dt.name, des);
                     d -> direct[d -> dirNum] = dt;
                     d -> dirNum ++;
                     writeDir(curINode -> dINode.addr[0], d);
@@ -1613,9 +1636,9 @@ int UnixFIleSys :: ln(string source, string des) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-int UnixFIleSys :: rmdir(string name)	{
+int UnixFIleSys :: rmdir(char name[MAX_NAME_SIZE])	{
     for (int i = 0; i < d -> dirNum; i ++)
-        if (d->direct[i].name == name) {
+        if (strcmp(d -> direct[i].name, name) == 0) {
             INode *temp = new INode();
             temp -> nodeId = d -> direct[i].iNodeId;
             readINode(temp);
@@ -1685,12 +1708,12 @@ void UnixFIleSys :: rmIter(unsigned short iNodeId) {
 }
 
 
-int UnixFIleSys :: cp(string source, string des) {
-    if (source == des)
+int UnixFIleSys :: cp(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
+    if (strcmp(source, des) == 0)
         return STATUS_SDNAME_OVERLAP;
     else
         for (int i = 0; i < d -> dirNum; i ++)
-            if (d -> direct[i].name == source) {
+            if (strcmp(d -> direct[i].name, source) == 0) {
                 INode *temp = new INode();
                 temp -> nodeId = d -> direct[i].iNodeId;
                 readINode(temp);
@@ -1718,7 +1741,7 @@ int UnixFIleSys :: cp(string source, string des) {
                         return r2;
                     }
                     for (int k = 0; k < d -> dirNum; k ++)
-                        if (d->direct[k].name == des) {
+                        if (strcmp(d -> direct[k].name, des) == 0) {
                             INode *t = new INode();
                             t -> nodeId = d -> direct[k].iNodeId;
                             readINode(t);

@@ -11,10 +11,10 @@ using namespace std;
 // 用户
 class Owner	{
 public:
-    unsigned short ownerId;	    // 用户Id
-    unsigned short groupId;	    // 组Id
-    string ownerName;	        // 用户名
-    string ownerPassword;       // 用户密码
+    unsigned short ownerId;	            // 用户Id
+    unsigned short groupId;	            // 组Id
+    char ownerName[MAX_NAME_SIZE];	    // 用户名
+    char ownerPassword[MAX_NAME_SIZE];  // 用户密码
 };
 
 #endif //OSFINAL1_OWNER_H
