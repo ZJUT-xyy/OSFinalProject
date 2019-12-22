@@ -277,7 +277,7 @@ int UnixFIleSys :: getFreeINode() {
 
 // 读当前目录
 // 如果全局变量中的当前节点的文件大小信息为0则直接修改全局变量d，不然通过当前节点的地址数组的头位置，读出目录信息
-int UnixFIleSys :: readCurDir() {
+int UnixFIleSys ::  readCurDir() {
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == nullptr)
         return STATUS_FILE_OPEN_ERROR;
@@ -319,91 +319,261 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
         int bs = text.size() / BLOCK_SIZE; // 追加的字符串大小所占的整块数
         int ls = text.size() % BLOCK_SIZE; // 追加的字符串大小所占的多余字节数
         int pos = 0;
-        // 原来文件恰好填满了一整块，就按照追加的字符串大小所占的整块数拿空闲块，并将每一个blockId加入原文件的地址数组
-        if (ps == 0) {
-            for (int i = 0; i < bs; i ++) {
-                int blockId = getFreeBlock();
-                if (blockId < 0) {
-                    fclose(f);
-                    return blockId;
-                } else {
-                    temp -> dINode.addr[as ++] = blockId;
-                    fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
-                    fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
-                    temp -> dINode.fileSize += BLOCK_SIZE;
-                    pos += BLOCK_SIZE;
-                }
-            }
-            // 如果追加的字符串有多余整块的字节，就再拿一个空闲块，将blockId加入原文件的地址数组
-            if (ls > 0) {
-                int blockId = getFreeBlock();
-                if (blockId < 0) {
-                    fclose(f);
-                    return blockId;
-                } else {
-                    temp -> dINode.addr[as ++] = blockId;
-                    fseek(f, BLOCK_SIZE *blockId, SEEK_SET);
-                    fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
-                    temp -> dINode.fileSize += ls;
-                    pos += ls;
-                }
-                fclose(f);
-                return STATUS_OK;
-            }
-            fclose(f);
-            return STATUS_OK;
+
+        // 计算如果写入后文件的总块数和最终多余字节数
+        int totalBlockNum = 0;
+        int totalLeft = 0;
+        if (ls <= BLOCK_SIZE - ps) { // 要写入的部分的多余字节可以填满原空隙
+            totalBlockNum = as + bs;
+            totalLeft = ps + ls;
+        } else { // 要写入的部分的多余字节填满原空隙还有多
+            totalBlockNum = as + bs + 1;
+            totalLeft = ps + ls - BLOCK_SIZE;
+        }
+        // 计算间址使用情况
+        int status = 0; // status为0代表未使用间址，status为1代表使用了以一级间址，status为2代表使用了以二级间址
+        if (totalBlockNum + (totalLeft > 0? 1: 0) <= 4) {
+            status = 0;
+        } else if (totalBlockNum + (totalLeft > 0? 1: 0) <= 4 + 128) {
+            status = 1;
+        } else if (totalBlockNum + (totalLeft > 0? 1: 0) <= 4 + 128 + 128 * 128) {
+            status = 2;
         } else {
-        // 原来文件不是恰好填满了一整块
-            int lps = BLOCK_SIZE - ps; // 原文件的非满块的剩余空间
-            // 如果追加字符串的大小小于原文件的非满块的剩余空间，直接写入，并修改文件大小属性
-            if (text.size() <= lps) {
-                fseek(f, BLOCK_SIZE *temp -> dINode.addr[as] + ps, SEEK_SET);
-                fwrite(text.c_str(), text.size(), 1, f);
-                temp -> dINode.fileSize += text.size();
-                fclose(f);
-                return STATUS_OK;
-            } else {
-            // 如果追加字符串的大小大于原文件的非满块的剩余空间，先写入追加字符串恰好填满非满块的剩余空间的部分
-                fseek(f, BLOCK_SIZE *temp -> dINode.addr[as ++] + ps, SEEK_SET);
-                fwrite(text.c_str(), lps, 1, f);
-                temp -> dINode.fileSize += lps;
-                int lts = text.size() - lps;  // 追加字符剩余未写大小
-                int lbs = lts / BLOCK_SIZE;   // 追加字符剩余未写所占的整块数
-                int lls = lts % BLOCK_SIZE;   // 追加字符剩余未写所占的多余字节数
-                int tpos = lps;
-                // 按照追加字符剩余未写大小所占的整块数拿空闲块，并将每一个blockId加入原文件的地址数组
-                for (int i = 0; i < lbs; i ++) {
+            return STATUS_BEYOND_SIZE;
+        }
+        // 计算原文件间址使用情况
+        int status0 = 0;
+        if (as + (ps > 0? 1: 0) <= 4) {
+            status0 = 0;
+        } else if (as + (ps > 0? 1: 0) <= 4 + 128) {
+            status0 = 1;
+        } else if (as + (ps > 0? 1: 0) <= 4 + 128 + 128 * 128) {
+            status0 = 2;
+        }
+
+        // 如果原文件的块数不需要使用间址，就直接读每一个整块，追加到content
+        if (status0 == 0 && status == 0) {
+            // 原来文件恰好填满了一整块，就按照追加的字符串大小所占的整块数拿空闲块，并将每一个blockId加入原文件的地址数组
+            if (ps == 0) {
+                for (int i = 0; i < bs; i++) {
                     int blockId = getFreeBlock();
                     if (blockId < 0) {
                         fclose(f);
                         return blockId;
                     } else {
-                        temp -> dINode.addr[as ++] = blockId;
-                        fseek(f, BLOCK_SIZE *blockId, SEEK_SET);
-                        fwrite(text.substr(tpos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
-                        temp -> dINode.fileSize += BLOCK_SIZE;
-                        tpos += BLOCK_SIZE;
+                        temp->dINode.addr[as++] = blockId;
+                        fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+                        fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
+                        temp->dINode.fileSize += BLOCK_SIZE;
+                        pos += BLOCK_SIZE;
                     }
                 }
-                // 如果追加字符剩余未写大小有多余整块的字节，就再拿一个空闲块，将blockId加入原文件的地址数组
-                if(lls > 0) {
+                // 如果追加的字符串有多余整块的字节，就再拿一个空闲块，将blockId加入原文件的地址数组
+                if (ls > 0) {
                     int blockId = getFreeBlock();
                     if (blockId < 0) {
                         fclose(f);
                         return blockId;
                     } else {
-                        temp -> dINode.addr[as ++] = blockId;
-                        fseek(f, BLOCK_SIZE *blockId, SEEK_SET);
-                        fwrite(text.substr(tpos, lls).c_str(), BLOCK_SIZE, 1, f);
-                        temp -> dINode.fileSize += lls;
-                        tpos += lls;
+                        temp->dINode.addr[as++] = blockId;
+                        fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+                        fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
+                        temp->dINode.fileSize += ls;
+                        pos += ls;
                     }
                     fclose(f);
                     return STATUS_OK;
                 }
                 fclose(f);
                 return STATUS_OK;
+            } else {
+                // 原来文件不是恰好填满了一整块
+                int lps = BLOCK_SIZE - ps; // 原文件的非满块的剩余空间
+                // 如果追加字符串的大小小于原文件的非满块的剩余空间，直接写入，并修改文件大小属性
+                if (text.size() <= lps) {
+                    fseek(f, BLOCK_SIZE * temp->dINode.addr[as] + ps, SEEK_SET);
+                    fwrite(text.c_str(), text.size(), 1, f);
+                    temp->dINode.fileSize += text.size();
+                    fclose(f);
+                    return STATUS_OK;
+                } else {
+                    // 如果追加字符串的大小大于原文件的非满块的剩余空间，先写入追加字符串恰好填满非满块的剩余空间的部分
+                    fseek(f, BLOCK_SIZE * temp->dINode.addr[as++] + ps, SEEK_SET);
+                    fwrite(text.c_str(), lps, 1, f);
+                    temp->dINode.fileSize += lps;
+                    int lts = text.size() - lps;  // 追加字符剩余未写大小
+                    int lbs = lts / BLOCK_SIZE;   // 追加字符剩余未写所占的整块数
+                    int lls = lts % BLOCK_SIZE;   // 追加字符剩余未写所占的多余字节数
+                    int tpos = lps;
+                    // 按照追加字符剩余未写大小所占的整块数拿空闲块，并将每一个blockId加入原文件的地址数组
+                    for (int i = 0; i < lbs; i++) {
+                        int blockId = getFreeBlock();
+                        if (blockId < 0) {
+                            fclose(f);
+                            return blockId;
+                        } else {
+                            temp->dINode.addr[as++] = blockId;
+                            fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+                            fwrite(text.substr(tpos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
+                            temp->dINode.fileSize += BLOCK_SIZE;
+                            tpos += BLOCK_SIZE;
+                        }
+                    }
+                    // 如果追加字符剩余未写大小有多余整块的字节，就再拿一个空闲块，将blockId加入原文件的地址数组
+                    if (lls > 0) {
+                        int blockId = getFreeBlock();
+                        if (blockId < 0) {
+                            fclose(f);
+                            return blockId;
+                        } else {
+                            temp->dINode.addr[as++] = blockId;
+                            fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+                            fwrite(text.substr(tpos, lls).c_str(), BLOCK_SIZE, 1, f);
+                            temp->dINode.fileSize += lls;
+                            tpos += lls;
+                        }
+                        fclose(f);
+                        return STATUS_OK;
+                    }
+                    fclose(f);
+                    return STATUS_OK;
+                }
             }
+        } else if (status0 == 0 && status == 1) {
+        // 如果原文件没有使用间址，追加后需要使用一级间址
+            // 原来文件恰好填满了一整块，就按照追加的字符串大小所占的整块数拿空闲块，并将每一个blockId加入原文件的地址数组
+            if (ps == 0) {
+                // 先使用完直接块号的部分
+                int remainDirectBlockNum = 4 - as;
+                for (int i = 0; i < remainDirectBlockNum; i++) {
+                    int blockId = getFreeBlock();
+                    if (blockId < 0) {
+                        fclose(f);
+                        return blockId;
+                    } else {
+                        (temp -> dINode).addr[as++] = blockId;
+                        fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+                        fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
+                        temp->dINode.fileSize += BLOCK_SIZE;
+                        pos += BLOCK_SIZE;
+                    }
+                }
+                // 申请一个空闲block用作存一级栈
+                int blockId = getFreeBlock();
+                int remainBlockNum = totalBlockNum - 4;
+                (temp -> dINode).addr[4] = blockId; // 写入地址数组的第5项（一级间址）
+                vector<unsigned int> firstStackBlocks[remainBlockNum];
+                // 为剩余每一个需要存进一级栈的（块），申请一个空闲块，并写入，同时调整pos
+                for (int p = 0; p < remainBlockNum; p ++) {
+                    int blockIdFir = getFreeBlock();
+                    if (blockIdFir < 0) {
+                        fclose(f);
+                        return blockIdFir;
+                    } else {
+                        // 申请到空闲块后写入一级栈数组
+                        firstStackBlocks -> push_back(blockIdFir);
+                        // 写数据
+                        fseek(f, BLOCK_SIZE * blockIdFir, SEEK_SET);
+                        fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
+                        (temp -> dINode).fileSize += BLOCK_SIZE;
+                        pos += BLOCK_SIZE;
+                    }
+                }
+                // 如果追加的字符串有多余整块的字节，就再拿一个空闲块，将blockId加入原文件的地址数组
+                if (ls > 0) {
+                    int blockIdLeft = getFreeBlock();
+                    if (blockIdLeft < 0) {
+                        fclose(f);
+                        return blockIdLeft;
+                    } else {
+                        // 申请到空闲块后写入一级栈数组
+                        firstStackBlocks -> push_back(blockIdLeft);
+                        // 写数据
+                        fseek(f, BLOCK_SIZE * blockIdLeft, SEEK_SET);
+                        fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
+                        (temp -> dINode).fileSize += ls;
+                        pos += ls;
+                    }
+                    fclose(f);
+                    return STATUS_OK;
+                }
+                fclose(f);
+                return STATUS_OK;
+            } else {
+                // 原来文件不是恰好填满了一整块
+                int lps = BLOCK_SIZE - ps; // 原文件的非满块的剩余空间
+                // 因为原文件未使用间址，写入后将使用间址，所以不存在追加字符串的大小小于原文件的非满块的剩余空间的情况
+                // 先写入追加字符串恰好填满非满块的剩余空间的部分
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[as ++] + ps, SEEK_SET);
+                fwrite(text.substr(pos, ls).c_str(), lps, 1, f);
+                temp -> dINode.fileSize += lps;
+                pos += lps;
+
+                int lts = text.size() - lps;  // 追加字符剩余未写大小
+                int lbs = lts / BLOCK_SIZE;   // 追加字符剩余未写所占的整块数
+                int lls = lts % BLOCK_SIZE;   // 追加字符剩余未写所占的多余字节数
+                int tpos = lps;
+                // 申请一个空闲块存储一级栈
+                int blockId = getFreeBlock();
+                int remainBlockNum = totalBlockNum - 4;
+                (temp -> dINode).addr[4] = blockId; // 写入地址数组的第5项（一级间址）
+                vector<unsigned int> firstStackBlocks;
+                // 为剩余每一个需要存进一级栈的（块），申请一个空闲块，并写入，同时调整pos
+                for (int p = 0; p < remainBlockNum; p ++) {
+                    int blockIdFir = getFreeBlock();
+                    if (blockIdFir < 0) {
+                        fclose(f);
+                        return blockIdFir;
+                    } else {
+                        // 申请到空闲块后写入一级栈数组
+                        firstStackBlocks.push_back(blockIdFir);
+                        // 写数据
+                        fseek(f, BLOCK_SIZE * blockIdFir, SEEK_SET);
+                        fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
+                        (temp -> dINode).fileSize += BLOCK_SIZE;
+                        pos += BLOCK_SIZE;
+                    }
+                }
+                // 如果追加的字符串有多余整块的字节，就再拿一个空闲块，将blockId加入原文件的地址数组
+                if (totalLeft > 0) {
+                    int blockIdLeft = getFreeBlock();
+                    if (blockIdLeft < 0) {
+                        fclose(f);
+                        return blockIdLeft;
+                    } else {
+                        // 申请到空闲块后写入一级栈数组
+                        firstStackBlocks.push_back(blockIdLeft);
+                        // 写数据
+                        fseek(f, BLOCK_SIZE * blockIdLeft, SEEK_SET);
+                        fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
+                        (temp -> dINode).fileSize += ls;
+                        pos += ls;
+                    }
+                    fclose(f);
+                    return STATUS_OK;
+                }
+                // 一级栈写回磁盘
+                fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+                fwrite(firstStackBlocks.data(),sizeof(decltype(firstStackBlocks)::value_type)* firstStackBlocks.size(), 1, f);
+                // fwrite(firstStackBlocks, sizeof(firstStackBlocks), 1, f);
+
+                fclose(f);
+                return STATUS_OK;
+            }
+        } else if (status0 == 0 && status == 2) {
+
+        } else if (status0 == 1 && status == 0) {
+
+        } else if (status0 == 1 && status == 1) {
+
+        } else if (status0 == 1 && status == 2) {
+
+        } else if (status0 == 2 && status == 0) {
+
+        } else if (status0 == 2 && status == 1) {
+
+        } else if (status0 == 2 && status == 2) {
+
         }
     }
 }
@@ -415,25 +585,104 @@ int UnixFIleSys :: readText(INode *temp) {
     if (f == NULL)
         return STATUS_FILE_OPEN_ERROR;
     else {
-        int as = temp -> dINode.fileSize / BLOCK_SIZE; // 文件大小所占的整块数
-        int ls = temp -> dINode.fileSize % BLOCK_SIZE; // 文件大小所占的多余字节数
+        int as = temp -> dINode.fileSize / BLOCK_SIZE;  // 文件大小所占的整块数
+        int ls = temp -> dINode.fileSize % BLOCK_SIZE;  // 文件大小所占的多余字节数
         char content[BLOCK_SIZE];
-        // 读出每一个块的内容，追加写入content
-        for (int i = 0; i < as; i ++) {
-            fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
-            fread(content, BLOCK_SIZE, 1, f);
-            cout << content;
-        }
-        // 如果文件有块外多余字节，找到块读出内容，追加写入content
-        if (ls > 0) {
-            fseek(f, BLOCK_SIZE * temp -> dINode.addr[as], SEEK_SET);
-            fread(content, ls, 1, f);
-            for (int i = 0; i < ls; i ++)
-                cout << content[i];
+        // 如果原文件的块数不需要使用间址，就直接读每一个整块，输出
+        if (as <= 4) {
+            int i = 0;
+            for (; i < as; i ++) {
+                memset(content, '\0', sizeof(content));
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                cout << content;
+            }
+            // 如果文件有块外字节
+            if (ls > 0) {
+                memset(content, '\0', sizeof(content));
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, ls, 1, f);
+                for (int p = 0; p < ls; p ++)
+                    cout << content[p];
+            }
+        } else if(as >= 5 && as <= 132) {
+            // 如果只用到了一级间址,先读直接地址的每一个整块，追加到content,再去一级栈读每一块的内容，输出
+            // 先读直接地址的每一个整块，输出
+            for (int i = 0; i < 4; i ++) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                cout << content;
+            }
+            // 读一级栈所在的块号，并定位到一级栈，读出其中的直接块号数组
+            int mid1BlockId = temp -> dINode.addr[4];
+            fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
+            int blockNumInFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4; // 通过文件大小计算在一级间址中使用了几个block
+            unsigned int blocksInFirstStack[128];
+            fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
+            int i = 0;
+            for (; i < blockNumInFirstStack; i ++) {
+                // 读出一级栈中的直接块号并读出其中内容，输出
+                fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                cout << content;
+            }
+            // 如果文件有块外字节
+            if (ls > 0) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, ls, 1, f);
+                for (int p = 0; p < ls; p ++)
+                    cout << content[p];
+            }
+        } else if (as > 132) {
+            // 如果用到了二级间址
+            // 先读直接地址的每一个整块，输出
+            for (int i = 0; i < 4; i ++) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                cout << content;
+            }
+            // 读一级栈所在的块号，并定位到一级栈，读出其中的二级栈所在的块的块号数组
+            int mid1BlockId = temp -> dINode.addr[4];
+            fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
+            unsigned int blocksInFirstStack[128];
+            fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
+            // 对于一级栈元素位置非最尾（其对应的二级栈不可能出现空隙）
+            for (int i = 0; i < 128 - 1; i ++) {
+                // 读出一级栈中的二级栈所在的块的块号，并定位到对应二级栈，读出二级栈中的直接块号数组
+                fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
+                unsigned int blocksInSecStack[128];
+                fread(blocksInSecStack, BLOCK_SIZE, 1, f);
+                for (int j = 0; j < 128; j ++) {
+                    // 读出二级栈中的直接块号并读出其中内容，输出
+                    fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
+                    fread(content, BLOCK_SIZE, 1, f);
+                    cout << content;
+                }
+            }
+            // 对于一级栈元素位置最尾（其对应的二级栈可能出现空隙）
+            fseek(f, BLOCK_SIZE * blocksInFirstStack[128], SEEK_SET);
+            unsigned int blocksInSecStack[128];
+            fread(blocksInSecStack, BLOCK_SIZE, 1, f);
+            int blockNumInLastFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 - 127 * 128; // 计算一级栈元素位置最尾对应的二级栈使用的blockNum
+            int j = 0;
+            for (; j < blockNumInLastFirstStack; j ++) {
+                // 读出二级栈中的直接块号并读出其中内容，输出
+                fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                cout << content;
+            }
+            // 如果文件有块外字节
+            if (ls > 0) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[j], SEEK_SET);
+                fread(content, ls, 1, f);
+                for (int p = 0; p < ls; p ++)
+                    cout << content[p];
+            }
         }
         fclose(f);
-        return STATUS_OK;
     }
+    return STATUS_OK;
+
 }
 
 // 归还空闲块
@@ -488,18 +737,94 @@ string UnixFIleSys :: getText(INode* temp) {
         int as = temp -> dINode.fileSize / BLOCK_SIZE;  // 文件大小所占的整块数
         int ls = temp -> dINode.fileSize % BLOCK_SIZE;  // 文件大小所占的多余字节数
         char content[BLOCK_SIZE];
-        // 先读每一个整块，追加到content
-        for (int i = 0; i < as; i ++) {
-            fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
-            fread(content, BLOCK_SIZE, 1, f);
-            text += content;
-        }
-        // 如果文件有块外字节
-        if (ls > 0) {
-            fseek(f, BLOCK_SIZE * temp -> dINode.addr[as], SEEK_SET);
-            fread(content, ls, 1, f);
-            for (int i = 0; i < ls; i ++)
-                text += content[i];
+        // 如果原文件的块数不需要使用间址，就直接读每一个整块，追加到content
+        if (as <= 4) {
+            int i = 0;
+            for (; i < as; i ++) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                text += content;
+            }
+            // 如果文件有块外字节
+            if (ls > 0) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, ls, 1, f);
+                for (int p = 0; p < ls; p ++)
+                    text += content[p];
+            }
+        } else if(as == 5) {
+        // 如果只用到了一级间址,先读直接地址的每一个整块，追加到content,再去一级栈读每一块的内容，追加到content
+            // 先读直接地址的每一个整块，追加到content
+            for (int i = 0; i < 4; i ++) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                text += content;
+            }
+            // 读一级栈所在的块号，并定位到一级栈，读出其中的直接块号数组
+            int mid1BlockId = temp -> dINode.addr[4];
+            fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
+            int blockNumInFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4; // 通过文件大小计算在一级间址中使用了几个block
+            unsigned int blocksInFirstStack[128];
+            fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
+            int i = 0;
+            for (; i < blockNumInFirstStack; i ++) {
+                // 读出一级栈中的直接块号并读出其中内容，追加到content
+                fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                text += content;
+            }
+            // 如果文件有块外字节
+            if (ls > 0) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, ls, 1, f);
+                for (int p = 0; p < ls; p ++)
+                    text += content[p];
+            }
+        } else if (as == 6) {
+        // 如果用到了二级间址
+            // 先读直接地址的每一个整块，追加到content
+            for (int i = 0; i < 4; i ++) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                text += content;
+            }
+            // 读一级栈所在的块号，并定位到一级栈，读出其中的二级栈所在的块的块号数组
+            int mid1BlockId = temp -> dINode.addr[4];
+            fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
+            unsigned int blocksInFirstStack[128];
+            fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
+            // 对于一级栈元素位置非最尾（其对应的二级栈不可能出现空隙）
+            for (int i = 0; i < 128 - 1; i ++) {
+                // 读出一级栈中的二级栈所在的块的块号，并定位到对应二级栈，读出二级栈中的直接块号数组
+                fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
+                unsigned int blocksInSecStack[128];
+                fread(blocksInSecStack, BLOCK_SIZE, 1, f);
+                for (int j = 0; j < 128; j ++) {
+                    // 读出二级栈中的直接块号并读出其中内容，追加到content
+                    fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
+                    fread(content, BLOCK_SIZE, 1, f);
+                    text += content;
+                }
+            }
+            // 对于一级栈元素位置最尾（其对应的二级栈可能出现空隙）
+            fseek(f, BLOCK_SIZE * blocksInFirstStack[128], SEEK_SET);
+            unsigned int blocksInSecStack[128];
+            fread(blocksInSecStack, BLOCK_SIZE, 1, f);
+            int blockNumInLastFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 - 127 * 128; // 计算一级栈元素位置最尾对应的二级栈使用的blockNum
+            int j = 0;
+            for (; j < blockNumInLastFirstStack; j ++) {
+                // 读出二级栈中的直接块号并读出其中内容，追加到content
+                fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
+                fread(content, BLOCK_SIZE, 1, f);
+                text += content;
+            }
+            // 如果文件有块外字节
+            if (ls > 0) {
+                fseek(f, BLOCK_SIZE * temp -> dINode.addr[j], SEEK_SET);
+                fread(content, ls, 1, f);
+                for (int p = 0; p < ls; p ++)
+                    text += content[p];
+            }
         }
         fclose(f);
         return text;
@@ -669,7 +994,7 @@ int UnixFIleSys :: superMkdir(INode* parent, char name[MAX_NAME_SIZE], unsigned 
                 time_t now;
                 now = time(NULL);
                 parent -> dINode.modifyTime = now;
-                parent -> dINode.addr[0] = blockId; // 为什么是addr[0]
+                parent -> dINode.addr[0] = blockId;
                 writeINode(parent);
                 Direct *dt = new Direct();
                 strcpy(dt -> name, name);
@@ -1731,15 +2056,10 @@ int UnixFIleSys :: textAppend(char name[MAX_NAME_SIZE])	{
                         }
                         j ++;
                     }
-                    if (text.size() + temp -> dINode.fileSize > FILE_MAX_SIZE) {
-                        delete temp;
-                        return STATUS_BEYOND_SIZE;
-                    } else {
-                        int result = writeText(temp, text);
-                        writeINode(temp);
-                        delete temp;
-                        return result;
-                    }
+                    int result = writeText(temp, text);
+                    writeINode(temp);
+                    delete temp;
+                    return result;
                 }
             }
         }
