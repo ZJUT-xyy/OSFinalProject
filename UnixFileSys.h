@@ -25,7 +25,7 @@ class UnixFIleSys {
     Owner *curOwner;
     INode *curINode = root;
     vector<Direct*> ds; // 记录所进入的目录
-    Dir* d = new Dir();
+    Dir *d = new Dir();
 
 public:
     // 全局初始化
@@ -85,7 +85,7 @@ public:
     // 创建新文件
     int touch(INode* parent,char name[MAX_NAME_SIZE]);
     // 写入文件内容
-    int writeText(INode* temp,string text);
+    int writeText(INode* temp,const string& text);
     // 文件内容追加
     int textAppend(char name[MAX_NAME_SIZE]);
     // 显示文件内容
@@ -108,6 +108,8 @@ public:
     int cp(char source[MAX_NAME_SIZE],char des[MAX_NAME_SIZE]);
     // 获取文件内容字符串
     string getText(INode* temp);
+    // 查看命令使用方法
+    void help(string c);
 };
 
 #endif //OSFINAL1_UNIXFILESYS_H

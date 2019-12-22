@@ -10,10 +10,10 @@
 // 内存iNode
 class INode	{
 public:
-    DINode dINode;              // 所属的目录i节点
+    DINode dINode;
     INode *parent;
     unsigned int nodeId;	    // i节点Id
-    unsigned int users;	        // 引用计数
+    unsigned int users;
 };
 
 #endif //OSFINAL1_INODE_H
