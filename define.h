@@ -16,5 +16,5 @@
 #define FILE_PATH "C:\\Users\\admin\\Desktop\\OSFinal1\\OSFinal1\\out\\disk.dat"	//模拟磁盘文件路径
 #define BLOCK_START 42	//起始盘块
 #define DIR_PADDING_SIZE 14 //目录结构填充字符数
-#define FILE_MAX_SIZE 2048	//文件最大容量
+#define FILE_MAX_SIZE 336622016	//文件最大容量
 #define ROOT 0	//超级权限ID

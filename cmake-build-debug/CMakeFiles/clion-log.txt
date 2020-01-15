@@ -1,4 +1,41 @@
-"D:\CLion 2019.2.4\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\admin\Desktop\OSFinal1\OSFinal1
--- Configuring done
--- Generating done
--- Build files have been written to: C:/Users/admin/Desktop/OSFinal1/OSFinal1/cmake-build-debug
+"D:\CLion 2019.2.4\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\admin\Desktop\操作系统课程设计\OSFinal1\OSFinal1
+-- The C compiler identification is GNU 4.9.2
+-- The CXX compiler identification is GNU 4.9.2
+-- Check for working C compiler: D:/Dev-Cpp/MinGW64/bin/gcc.exe
+-- Check for working C compiler: D:/Dev-Cpp/MinGW64/bin/gcc.exe -- broken
+CMake Error at D:/CLion 2019.2.4/bin/cmake/win/share/cmake-3.15/Modules/CMakeTestCCompiler.cmake:60 (message):
+  The C compiler
+
+    "D:/Dev-Cpp/MinGW64/bin/gcc.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: C:/Users/admin/Desktop/鎿嶄綔绯荤粺璇剧▼璁捐/OSFinal1/OSFinal1/cmake-build-debug/CMakeFiles/CMakeTmp
+    
+    Run Build Command(s):D:/Dev-Cpp/MinGW64/bin/mingw32-make.exe cmTC_abf25/fast && D:/Dev-Cpp/MinGW64/bin/mingw32-make.exe -f CMakeFiles\cmTC_abf25.dir\build.make CMakeFiles/cmTC_abf25.dir/build
+    mingw32-make.exe[1]: Entering directory 'C:/Users/admin/Desktop/鎿嶄綔绯荤粺璇剧▼璁捐/OSFinal1/OSFinal1/cmake-build-debug/CMakeFiles/CMakeTmp'
+    Building C object CMakeFiles/cmTC_abf25.dir/testCCompiler.c.obj
+    D:\Dev-Cpp\MinGW64\bin\gcc.exe    -o CMakeFiles\cmTC_abf25.dir\testCCompiler.c.obj   -c C:\Users\admin\Desktop\閹垮秳缍旂化鑽ょ埠鐠囧墽鈻肩拋鎹愵吀\OSFinal1\OSFinal1\cmake-build-debug\CMakeFiles\CMakeTmp\testCCompiler.c
+    gcc.exe: error: C:\Users\admin\Desktop\閹垮秳缍旂化鑽ょ埠鐠囧墽鈻肩拋鎹愵吀\OSFinal1\OSFinal1\cmake-build-debug\CMakeFiles\CMakeTmp\testCCompiler.c: No such file or directory
+    gcc.exe: fatal error: no input files
+    compilation terminated.
+    CMakeFiles\cmTC_abf25.dir\build.make:64: recipe for target 'CMakeFiles/cmTC_abf25.dir/testCCompiler.c.obj' failed
+    mingw32-make.exe[1]: *** [CMakeFiles/cmTC_abf25.dir/testCCompiler.c.obj] Error 1
+    mingw32-make.exe[1]: Leaving directory 'C:/Users/admin/Desktop/鎿嶄綔绯荤粺璇剧▼璁捐/OSFinal1/OSFinal1/cmake-build-debug/CMakeFiles/CMakeTmp'
+    Makefile:120: recipe for target 'cmTC_abf25/fast' failed
+    mingw32-make.exe: *** [cmTC_abf25/fast] Error 2
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:2 (project)
+
+
+-- Configuring incomplete, errors occurred!
+See also "C:/Users/admin/Desktop/鎿嶄綔绯荤粺璇剧▼璁捐/OSFinal1/OSFinal1/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "C:/Users/admin/Desktop/鎿嶄綔绯荤粺璇剧▼璁捐/OSFinal1/OSFinal1/cmake-build-debug/CMakeFiles/CMakeError.log".

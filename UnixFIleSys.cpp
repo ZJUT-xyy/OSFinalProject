@@ -7,20 +7,20 @@
 #include "UnixFileSys.h"
 #include "status.h"
 
-// ³õÊ¼»¯ÏµÁĞ²Ù×÷ ///////////////////////////////////////////////////////////////////////////////////////////////////////
-// ³õÊ¼»¯Êı¾İ
+// åˆå§‹åŒ–ç³»åˆ—æ“ä½œ ///////////////////////////////////////////////////////////////////////////////////////////////////////
+// åˆå§‹åŒ–æ•°æ®
 void UnixFIleSys :: initGlobal(FILE* f) {
-    cout << "ÏÖÔÚ¿ªÊ¼³õÊ¼»¯Êı¾İ" << endl;
-    // ³õÊ¼»¯³¬¼¶¿é
+    cout << "ç°åœ¨å¼€å§‹åˆå§‹åŒ–æ•°æ®" << endl;
+    // åˆå§‹åŒ–è¶…çº§å—
     sp -> size = DISK_SIZE;
-    sp -> freeBlockNum = BLOCK_NUM; // ³õÊ¼ËùÓĞµÄÅÌ¿é¶¼Îª¿ÕÏĞÅÌ¿é
+    sp -> freeBlockNum = BLOCK_NUM; // åˆå§‹æ‰€æœ‰çš„ç›˜å—éƒ½ä¸ºç©ºé—²ç›˜å—
     sp -> freeINodeNum = INODE_NUM - 1;
     for (int j = 0; j < INODE_NUM; j ++)
-        sp -> freeINode[j] = INODE_NUM + 1 - j; // ÎªÃ¿Ò»¸öINode³õÊ¼»¯Ò»¸öINodeId
+        sp -> freeINode[j] = INODE_NUM + 1 - j; // ä¸ºæ¯ä¸€ä¸ªINodeåˆå§‹åŒ–ä¸€ä¸ªINodeId
     sp -> nextFreeINode = INODE_NUM - 2;
 
-    // ³õÊ¼»¯¸ùINode
-    root -> parent = nullptr; // ¸ùÄ¿Â¼µÄ¸¸Ä¿Â¼Îª¿Õ
+    // åˆå§‹åŒ–æ ¹INode
+    root -> parent = nullptr; // æ ¹ç›®å½•çš„çˆ¶ç›®å½•ä¸ºç©º
     root -> nodeId = 2;
     root -> users = 1;
     time_t now;
@@ -34,7 +34,7 @@ void UnixFIleSys :: initGlobal(FILE* f) {
     root -> dINode.ownerId = 1;
     root -> dINode.readTime = now;
 
-    // ³õÊ¼»¯ÓÃ»§
+    // åˆå§‹åŒ–ç”¨æˆ·
     os -> ownerNum = 2;
     os -> os[0].ownerId = 1;
     os -> os[0].groupId = 1;
@@ -45,32 +45,32 @@ void UnixFIleSys :: initGlobal(FILE* f) {
     strcpy(os -> os[1].ownerName, "osfinal2");
     strcpy(os -> os[1].ownerPassword, "osfinal2");
 
-    // ³õÊ¼»¯ÓÃ»§×é
+    // åˆå§‹åŒ–ç”¨æˆ·ç»„
     gs -> groupNum = 2;
     gs -> gs[0].groupId = 1;
     strcpy(gs -> gs[0].groupName, "zjut");
     gs -> gs[1].groupId = 2;
     strcpy(gs -> gs[1].groupName, "zjut2");
 
-    f = fopen(FILE_PATH,"wb"); // wb - Ö»Ğ´´ò¿ª»òĞÂ½¨Ò»¸ö¶ş½øÖÆÎÄ¼ş
+    f = fopen(FILE_PATH,"wb"); // wb - åªå†™æ‰“å¼€æˆ–æ–°å»ºä¸€ä¸ªäºŒè¿›åˆ¶æ–‡ä»¶
 
-    int bGs = BLOCK_NUM / BLOCK_GROUP_SIZE; // ÓĞ¶àÉÙ×é
-    int left = BLOCK_NUM - bGs * BLOCK_GROUP_SIZE; // Õû×éÍâÊ£ÏÂµÄ¿éÊı
+    int bGs = BLOCK_NUM / BLOCK_GROUP_SIZE; // æœ‰å¤šå°‘ç»„
+    int left = BLOCK_NUM - bGs * BLOCK_GROUP_SIZE; // æ•´ç»„å¤–å‰©ä¸‹çš„å—æ•°
 
     fseek(f, DISK_SIZE, SEEK_SET);
     fwrite("?", 1, 1, f);
 
-    // Èç¹ûÎªÕû×é£¬Ã»ÓĞÁãËé¿é
+    // å¦‚æœä¸ºæ•´ç»„ï¼Œæ²¡æœ‰é›¶ç¢å—
     if (left == 0) {
         for (int i = 0; i < BLOCK_GROUP_SIZE; i ++)
-            sp -> freeBlock[i] = BLOCK_START + BLOCK_GROUP_SIZE - 1 - i; // ³õÊ¼»¯µ±Ç°×éµÄ¿éºÅ
-        sp -> nextFreeBlock = BLOCK_GROUP_SIZE - 1; // ÏÂÒ»¸ö¿ÕÏĞ¿éÔÚ×éÄÚµÄÆ«ÒÆÊı
-        // °´×é³õÊ¼»¯È«²¿¿éºÅ£¬²¢°´×éĞ´Èë´ÅÅÌ
+            sp -> freeBlock[i] = BLOCK_START + BLOCK_GROUP_SIZE - 1 - i; // åˆå§‹åŒ–å½“å‰ç»„çš„å—å·
+        sp -> nextFreeBlock = BLOCK_GROUP_SIZE - 1; // ä¸‹ä¸€ä¸ªç©ºé—²å—åœ¨ç»„å†…çš„åç§»æ•°
+        // æŒ‰ç»„åˆå§‹åŒ–å…¨éƒ¨å—å·ï¼Œå¹¶æŒ‰ç»„å†™å…¥ç£ç›˜
         for (int j = 0; j < bGs; j ++) {
             unsigned int blocksNum = BLOCK_GROUP_SIZE;
             unsigned int blocks[BLOCK_GROUP_SIZE];
             for (int k = 0; k < BLOCK_GROUP_SIZE; k ++)
-                blocks[k] = left + BLOCK_START + BLOCK_GROUP_SIZE * (j + 1) - k - 1; // ³õÊ¼»¯È«²¿¿éºÅ
+                blocks[k] = left + BLOCK_START + BLOCK_GROUP_SIZE * (j + 1) - k - 1; // åˆå§‹åŒ–å…¨éƒ¨å—å·
             fseek(f, BLOCK_SIZE * (left + BLOCK_START + BLOCK_GROUP_SIZE * j - 1), SEEK_SET);
             fwrite(&blocksNum, sizeof(blocksNum), 1, f);
             fwrite(&blocks, sizeof(blocks), 1, f);
@@ -81,21 +81,21 @@ void UnixFIleSys :: initGlobal(FILE* f) {
         fwrite(&blocksNum, sizeof(blocksNum), 1, f);
         fwrite(&blocks, sizeof(blocks), 1, f);
     } else {
-    // Èç¹ûÓĞÁãËé¿é£¬ÁãËé¿é×Ô³ÉÒ»×é£¬¸Ã×é·ÅÔÚ¿ÕÏĞ×éÕ»µÄÕ»¶¥
+    // å¦‚æœæœ‰é›¶ç¢å—ï¼Œé›¶ç¢å—è‡ªæˆä¸€ç»„ï¼Œè¯¥ç»„æ”¾åœ¨ç©ºé—²ç»„æ ˆçš„æ ˆé¡¶
         for (int i = 0; i < left; i ++)
             sp -> freeBlock[i] = BLOCK_START + left - 1 - i;
-        sp -> nextFreeBlock = left - 1; // ÏÂÒ»¸ö¿ÕÏĞ¿éÔÚ×éÄÚµÄÆ«ÒÆÊı
-        // °´×é³õÊ¼»¯È«²¿¿éºÅ£¬²¢°´×éĞ´Èë´ÅÅÌ
+        sp -> nextFreeBlock = left - 1; // ä¸‹ä¸€ä¸ªç©ºé—²å—åœ¨ç»„å†…çš„åç§»æ•°
+        // æŒ‰ç»„åˆå§‹åŒ–å…¨éƒ¨å—å·ï¼Œå¹¶æŒ‰ç»„å†™å…¥ç£ç›˜
         for(int j = 0; j < bGs; j ++) {
             unsigned int blocksNum = BLOCK_GROUP_SIZE;
             unsigned int blocks[BLOCK_GROUP_SIZE];
             for (int k = 0; k < BLOCK_GROUP_SIZE; k ++)
-                blocks[k] = left + BLOCK_START + BLOCK_GROUP_SIZE * (j + 1) - k - 1; // ¼ÆËã¿éºÅ
+                blocks[k] = left + BLOCK_START + BLOCK_GROUP_SIZE * (j + 1) - k - 1; // è®¡ç®—å—å·
             fseek(f, BLOCK_SIZE * (left + BLOCK_START + BLOCK_GROUP_SIZE * j - 1), SEEK_SET);
             fwrite(&blocksNum,sizeof(blocksNum), 1, f);
             fwrite(&blocks, sizeof(blocks), 1, f);
         }
-        // ²»×ãÒ»¸öÅÌ¿é×éµÄ²¿·Ö
+        // ä¸è¶³ä¸€ä¸ªç›˜å—ç»„çš„éƒ¨åˆ†
         unsigned int blocksNum = 0;
         unsigned int blocks[BLOCK_GROUP_SIZE];
         fseek(f, BLOCK_SIZE * (left + BLOCK_START + BLOCK_GROUP_SIZE * bGs - 1), SEEK_SET);
@@ -103,8 +103,8 @@ void UnixFIleSys :: initGlobal(FILE* f) {
         fwrite(&blocks, sizeof(blocks), 1, f);
     }
 
-    // ½«³õÊ¼»¯ºóµÄÈ«¾Ö±äÁ¿Ğ´Èë´ÅÅÌ
-    fseek(f, BLOCK_SIZE, SEEK_SET); // ¶¨Î»µ½³¬¼¶¿éµÄÎ»ÖÃ£¨Ò»¸öBLOCK_SIZEÖ®ºó£©
+    // å°†åˆå§‹åŒ–åçš„å…¨å±€å˜é‡å†™å…¥ç£ç›˜
+    fseek(f, BLOCK_SIZE, SEEK_SET); // å®šä½åˆ°è¶…çº§å—çš„ä½ç½®ï¼ˆä¸€ä¸ªBLOCK_SIZEä¹‹åï¼‰
     fwrite(sp, sizeof(SuperBlock), 1, f);
     fwrite(os, sizeof(Owners), 1, f);
     fwrite(gs, sizeof(Groups), 1, f);
@@ -112,7 +112,7 @@ void UnixFIleSys :: initGlobal(FILE* f) {
     fwrite(&root -> dINode, sizeof(DINode), 1, f);
     fclose(f);
 
-    // ³õÊ¼»¯Ä¿Â¼
+    // åˆå§‹åŒ–ç›®å½•
     auto* dt = new Direct();
     dt -> iNodeId = 2;
     strcpy(dt -> name, "root");
@@ -120,21 +120,21 @@ void UnixFIleSys :: initGlobal(FILE* f) {
     superMkdir(root, "test1", 1, 1);
     superMkdir(root, "test2", 2, 2);
 
-    cout << "³õÊ¼»¯Êı¾İ³É¹¦£¡" << endl;
+    cout << "åˆå§‹åŒ–æ•°æ®æˆåŠŸï¼" << endl;
 
-    cout << "×Ü¹²ÓĞ" << os -> ownerNum << "¸öÓÃ»§" << endl;
+    cout << "æ€»å…±æœ‰" << os -> ownerNum << "ä¸ªç”¨æˆ·" << endl;
     for (int j = 0; j < os -> ownerNum; j ++)
         cout << os -> os[j].ownerName << endl;
 }
 
 void UnixFIleSys :: initSystem() {
     FILE *f = fopen(FILE_PATH,"rb");
-    // Èç¹û´ÅÅÌÎÄ¼ş²»´æÔÚ¾Í½øĞĞÈ«¾Ö³õÊ¼»¯
+    // å¦‚æœç£ç›˜æ–‡ä»¶ä¸å­˜åœ¨å°±è¿›è¡Œå…¨å±€åˆå§‹åŒ–
     if(f == nullptr) {
-        cout << "ÏµÍ³ÔİÎŞÊı¾İ" << endl;
+        cout << "ç³»ç»Ÿæš‚æ— æ•°æ®" << endl;
         initGlobal(f);
     } else {
-    // Èç¹û´ÅÅÌÎÄ¼ş´æÔÚ¾Í¶Á³öÈ«¾Ö±äÁ¿¡¢¸ùÄ¿Â¼ĞÅÏ¢£¬ÇÒ½«¸ùÄ¿Â¼Ñ¹ÈëÂ·¾¶Õ»
+    // å¦‚æœç£ç›˜æ–‡ä»¶å­˜åœ¨å°±è¯»å‡ºå…¨å±€å˜é‡ã€æ ¹ç›®å½•ä¿¡æ¯ï¼Œä¸”å°†æ ¹ç›®å½•å‹å…¥è·¯å¾„æ ˆ
         fseek(f, BLOCK_SIZE, SEEK_SET);
         fread(sp, sizeof(SuperBlock), 1, f);
         fread(os, sizeof(Owners), 1, f);
@@ -147,16 +147,16 @@ void UnixFIleSys :: initSystem() {
         auto* dt = new Direct();
         dt -> iNodeId = 2;
         strcpy(dt -> name, "root");
-        ds.push_back(dt); // ½«¸ùÄ¿Â¼Ñ¹ÈëÂ·¾¶Õ»
+        ds.push_back(dt); // å°†æ ¹ç›®å½•å‹å…¥è·¯å¾„æ ˆ
         fclose(f);
         readCurDir();
     }
 }
 
 
-// ¹¤¾ß·½·¨//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ¶ÁÄÚ´æ½Úµã
-// Í¨¹ıINodeIdÕÒµ½INodeµÄÆğÊ¼Î»ÖÃ£¬¶Á³ö
+// å·¥å…·æ–¹æ³•//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// è¯»å†…å­˜èŠ‚ç‚¹
+// é€šè¿‡INodeIdæ‰¾åˆ°INodeçš„èµ·å§‹ä½ç½®ï¼Œè¯»å‡º
 bool UnixFIleSys :: readINode(INode* r)	{
     FILE *f=fopen(FILE_PATH,"rb");
     if(f == nullptr)
@@ -169,8 +169,8 @@ bool UnixFIleSys :: readINode(INode* r)	{
     }
 }
 
-// Ğ´ÄÚ´æ½Úµã
-// Í¨¹ıINodeIdÕÒµ½INodeµÄÆğÊ¼Î»ÖÃ£¬Ğ´Èë
+// å†™å†…å­˜èŠ‚ç‚¹
+// é€šè¿‡INodeIdæ‰¾åˆ°INodeçš„èµ·å§‹ä½ç½®ï¼Œå†™å…¥
 bool UnixFIleSys :: writeINode(INode* w) {
     FILE *f = fopen(FILE_PATH, "rb+");
     if (f == nullptr)
@@ -183,8 +183,8 @@ bool UnixFIleSys :: writeINode(INode* w) {
     }
 }
 
-// Ğ´³¬¼¶¿é
-// ¶¨Î»µ½´ÅÅÌÍ·¿ªÊ¼£¬Ò»¸öBLOCK_SIZEÖ®ºó£¨SuperBlockµÄÆğÊ¼Î»ÖÃ£©£¬Ğ´Èë
+// å†™è¶…çº§å—
+// å®šä½åˆ°ç£ç›˜å¤´å¼€å§‹ï¼Œä¸€ä¸ªBLOCK_SIZEä¹‹åï¼ˆSuperBlockçš„èµ·å§‹ä½ç½®ï¼‰ï¼Œå†™å…¥
 bool UnixFIleSys :: writeSuperBlock() {
     FILE *f = fopen(FILE_PATH, "rb+");
     if (f == nullptr)
@@ -197,8 +197,8 @@ bool UnixFIleSys :: writeSuperBlock() {
     }
 }
 
-// Ğ´Ä¿Â¼
-// Í¨¹ıblockIdÕÒµ½Ä¿Â¼ÆğÊ¼Î»ÖÃ£¬Ğ´Èë
+// å†™ç›®å½•
+// é€šè¿‡blockIdæ‰¾åˆ°ç›®å½•èµ·å§‹ä½ç½®ï¼Œå†™å…¥
 bool UnixFIleSys :: writeDir(unsigned int blockId, Dir* d) {
     FILE *f = fopen(FILE_PATH, "rb+");
     if (f == NULL)
@@ -211,8 +211,8 @@ bool UnixFIleSys :: writeDir(unsigned int blockId, Dir* d) {
     }
 }
 
-// ¶ÁÄ¿Â¼
-// Í¨¹ıblockIdÕÒµ½Ä¿Â¼ÆğÊ¼Î»ÖÃ£¬¶Á³ö
+// è¯»ç›®å½•
+// é€šè¿‡blockIdæ‰¾åˆ°ç›®å½•èµ·å§‹ä½ç½®ï¼Œè¯»å‡º
 bool UnixFIleSys :: readDir(unsigned int blockId, Dir* d) {
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == nullptr)
@@ -225,8 +225,8 @@ bool UnixFIleSys :: readDir(unsigned int blockId, Dir* d) {
     }
 }
 
-// ¶ÁÏÂÒ»×é
-// Í¨¹ıµ±Ç°×éµÄÕ»¶¥¿éµÄ¿éºÅÕÒµ½ÏÂÒ»×éµÄÆğÊ¼Î»ÖÃ£¨Õ»µ×£©£¬¶Á³öÏÂÒ»×éµÄ¿ÕÏĞÕ»ĞÅÏ¢ºÍÏÂÒ»¸ö¿ÕÏĞ¿éĞÅÏ¢
+// è¯»ä¸‹ä¸€ç»„
+// é€šè¿‡å½“å‰ç»„çš„æ ˆé¡¶å—çš„å—å·æ‰¾åˆ°ä¸‹ä¸€ç»„çš„èµ·å§‹ä½ç½®ï¼ˆæ ˆåº•ï¼‰ï¼Œè¯»å‡ºä¸‹ä¸€ç»„çš„ç©ºé—²æ ˆä¿¡æ¯å’Œä¸‹ä¸€ä¸ªç©ºé—²å—ä¿¡æ¯
 bool UnixFIleSys :: readNextBG() {
     FILE *f = fopen(FILE_PATH, "rb");
     if(f == nullptr)
@@ -243,18 +243,18 @@ bool UnixFIleSys :: readNextBG() {
     }
 }
 
-// »ñÈ¡Ò»¸ö¿ÕÏĞ¿é
-// µ±Ç°×éµÄĞÅÏ¢´æ´¢ÔÚ³¬¼¶¿éÖĞ£¬²Ù×÷ÍêÒÔºó£¬Ğ´³¬¼¶¿é
+// è·å–ä¸€ä¸ªç©ºé—²å—
+// å½“å‰ç»„çš„ä¿¡æ¯å­˜å‚¨åœ¨è¶…çº§å—ä¸­ï¼Œæ“ä½œå®Œä»¥åï¼Œå†™è¶…çº§å—
 int UnixFIleSys :: getFreeBlock() {
     if(sp -> freeBlockNum > 0) {
-        // Èç¹ûµ±Ç°ÅÌÓĞ¿ÕÏĞ¿é¾ÍÄÃÒ»¸ö
+        // å¦‚æœå½“å‰ç›˜æœ‰ç©ºé—²å—å°±æ‹¿ä¸€ä¸ª
         if (sp -> nextFreeBlock > 0) {
             sp -> freeBlockNum --;
             sp -> nextFreeBlock --;
             writeSuperBlock();
             return sp -> freeBlock[sp -> nextFreeBlock + 1];
         } else {
-            // Èç¹ûµ±Ç°ÅÌÒÑ¾­Ã»ÓĞ¿ÕÏĞ¿éÁË£¬¾Í¶ÁÏÂÒ»¸öÅÌ£¬ÔÙÖ´ĞĞÒ»´Î»ñÈ¡¿ÕÏĞ¿éµÄ·½·¨
+            // å¦‚æœå½“å‰ç›˜å·²ç»æ²¡æœ‰ç©ºé—²å—äº†ï¼Œå°±è¯»ä¸‹ä¸€ä¸ªç›˜ï¼Œå†æ‰§è¡Œä¸€æ¬¡è·å–ç©ºé—²å—çš„æ–¹æ³•
             readNextBG();
             return getFreeBlock();
         }
@@ -262,8 +262,8 @@ int UnixFIleSys :: getFreeBlock() {
         return STATUS_NO_BLOCK;
 }
 
-// »ñÈ¡Ò»¸ö¿ÕÏĞ½Úµã
-// µ±Ç°¹ØÓÚ½ÚµãµÄĞÅÏ¢´æ´¢ÔÚ³¬¼¶¿éÖĞ£¬²Ù×÷ÍêÒÔºó£¬Ğ´³¬¼¶¿é
+// è·å–ä¸€ä¸ªç©ºé—²èŠ‚ç‚¹
+// å½“å‰å…³äºèŠ‚ç‚¹çš„ä¿¡æ¯å­˜å‚¨åœ¨è¶…çº§å—ä¸­ï¼Œæ“ä½œå®Œä»¥åï¼Œå†™è¶…çº§å—
 int UnixFIleSys :: getFreeINode() {
     if (sp -> freeINodeNum > 0) {
         sp -> freeINodeNum --;
@@ -275,8 +275,8 @@ int UnixFIleSys :: getFreeINode() {
         return STATUS_NO_INODE;
 }
 
-// ¶Áµ±Ç°Ä¿Â¼
-// Èç¹ûÈ«¾Ö±äÁ¿ÖĞµÄµ±Ç°½ÚµãµÄÎÄ¼ş´óĞ¡ĞÅÏ¢Îª0ÔòÖ±½ÓĞŞ¸ÄÈ«¾Ö±äÁ¿d£¬²»È»Í¨¹ıµ±Ç°½ÚµãµÄµØÖ·Êı×éµÄÍ·Î»ÖÃ£¬¶Á³öÄ¿Â¼ĞÅÏ¢
+// è¯»å½“å‰ç›®å½•
+// å¦‚æœå…¨å±€å˜é‡ä¸­çš„å½“å‰èŠ‚ç‚¹çš„æ–‡ä»¶å¤§å°ä¿¡æ¯ä¸º0åˆ™ç›´æ¥ä¿®æ”¹å…¨å±€å˜é‡dï¼Œä¸ç„¶é€šè¿‡å½“å‰èŠ‚ç‚¹çš„åœ°å€æ•°ç»„çš„å¤´ä½ç½®ï¼Œè¯»å‡ºç›®å½•ä¿¡æ¯
 int UnixFIleSys ::  readCurDir() {
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == nullptr)
@@ -293,8 +293,8 @@ int UnixFIleSys ::  readCurDir() {
     }
 }
 
-// Ğ´Owners
-// ¶¨Î»µ½Ò»¸ö¿é´óĞ¡¼ÓÉÏÒ»¸ö³¬¼¶¿é´óĞ¡Ö®ºó£¨OwnersµÄÆğÊ¼Î»ÖÃ£©£¬Ğ´Èë
+// å†™Owners
+// å®šä½åˆ°ä¸€ä¸ªå—å¤§å°åŠ ä¸Šä¸€ä¸ªè¶…çº§å—å¤§å°ä¹‹åï¼ˆOwnersçš„èµ·å§‹ä½ç½®ï¼‰ï¼Œå†™å…¥
 bool UnixFIleSys ::  writeOS() {
     FILE *f = fopen(FILE_PATH, "rb+");
     if (f == NULL)
@@ -307,31 +307,31 @@ bool UnixFIleSys ::  writeOS() {
     }
 }
 
-// Ğ´text
-// Ö÷Òª¿¼ÂÇÔ­ÎÄ¼şÓĞÃ»ÓĞ¿é¿Õ¿ÕÏ¶£¬×·¼Ó×Ö·û´®·Ö¿éºóÓĞÃ»ÓĞ¿é¿ÕÏ¶£¬ÓĞ¿ÕÏ¶ÏÈÌî¿ÕÏ¶
+// å†™text
+// ä¸»è¦è€ƒè™‘åŸæ–‡ä»¶æœ‰æ²¡æœ‰å—ç©ºç©ºéš™ï¼Œè¿½åŠ å­—ç¬¦ä¸²åˆ†å—åæœ‰æ²¡æœ‰å—ç©ºéš™ï¼Œæœ‰ç©ºéš™å…ˆå¡«ç©ºéš™
 int UnixFIleSys :: writeText(INode* temp, const string& text) {
     FILE *f = fopen(FILE_PATH,"rb+");
     if (f == nullptr)
         return STATUS_FILE_OPEN_ERROR;
     else {
-        int as = temp -> dINode.fileSize / BLOCK_SIZE; // Ô­À´ÎÄ¼ş´óĞ¡ËùÕ¼µÄÕû¿éÊı
-        int ps = temp -> dINode.fileSize % BLOCK_SIZE; // Ô­À´ÎÄ¼ş´óĞ¡ËùÕ¼µÄ¶àÓà×Ö½ÚÊı
-        int bs = text.size() / BLOCK_SIZE; // ×·¼ÓµÄ×Ö·û´®´óĞ¡ËùÕ¼µÄÕû¿éÊı
-        int ls = text.size() % BLOCK_SIZE; // ×·¼ÓµÄ×Ö·û´®´óĞ¡ËùÕ¼µÄ¶àÓà×Ö½ÚÊı
+        int as = temp -> dINode.fileSize / BLOCK_SIZE; // åŸæ¥æ–‡ä»¶å¤§å°æ‰€å çš„æ•´å—æ•°
+        int ps = temp -> dINode.fileSize % BLOCK_SIZE; // åŸæ¥æ–‡ä»¶å¤§å°æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
+        int bs = text.size() / BLOCK_SIZE; // è¿½åŠ çš„å­—ç¬¦ä¸²å¤§å°æ‰€å çš„æ•´å—æ•°
+        int ls = text.size() % BLOCK_SIZE; // è¿½åŠ çš„å­—ç¬¦ä¸²å¤§å°æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
         int pos = 0;
 
-        // ¼ÆËãÈç¹ûĞ´ÈëºóÎÄ¼şµÄ×Ü¿éÊıºÍ×îÖÕ¶àÓà×Ö½ÚÊı
+        // è®¡ç®—å¦‚æœå†™å…¥åæ–‡ä»¶çš„æ€»å—æ•°å’Œæœ€ç»ˆå¤šä½™å­—èŠ‚æ•°
         int totalBlockNum = 0;
         int totalLeft = 0;
-        if (ls <= BLOCK_SIZE - ps) { // ÒªĞ´ÈëµÄ²¿·ÖµÄ¶àÓà×Ö½Ú¿ÉÒÔÌîÂúÔ­¿ÕÏ¶
+        if (ls <= BLOCK_SIZE - ps) { // è¦å†™å…¥çš„éƒ¨åˆ†çš„å¤šä½™å­—èŠ‚å¯ä»¥å¡«æ»¡åŸç©ºéš™
             totalBlockNum = as + bs;
             totalLeft = ps + ls;
-        } else { // ÒªĞ´ÈëµÄ²¿·ÖµÄ¶àÓà×Ö½ÚÌîÂúÔ­¿ÕÏ¶»¹ÓĞ¶à
+        } else { // è¦å†™å…¥çš„éƒ¨åˆ†çš„å¤šä½™å­—èŠ‚å¡«æ»¡åŸç©ºéš™è¿˜æœ‰å¤š
             totalBlockNum = as + bs + 1;
             totalLeft = ps + ls - BLOCK_SIZE;
         }
-        // ¼ÆËã¼äÖ·Ê¹ÓÃÇé¿ö
-        int status = 0; // statusÎª0´ú±íÎ´Ê¹ÓÃ¼äÖ·£¬statusÎª1´ú±íÊ¹ÓÃÁËÒÔÒ»¼¶¼äÖ·£¬statusÎª2´ú±íÊ¹ÓÃÁËÒÔ¶ş¼¶¼äÖ·
+        // è®¡ç®—é—´å€ä½¿ç”¨æƒ…å†µ
+        int status = 0; // statusä¸º0ä»£è¡¨æœªä½¿ç”¨é—´å€ï¼Œstatusä¸º1ä»£è¡¨ä½¿ç”¨äº†ä»¥ä¸€çº§é—´å€ï¼Œstatusä¸º2ä»£è¡¨ä½¿ç”¨äº†ä»¥äºŒçº§é—´å€
         if (totalBlockNum + (totalLeft > 0? 1: 0) <= 4) {
             status = 0;
         } else if (totalBlockNum + (totalLeft > 0? 1: 0) <= 4 + 128) {
@@ -341,7 +341,7 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
         } else {
             return STATUS_BEYOND_SIZE;
         }
-        // ¼ÆËãÔ­ÎÄ¼ş¼äÖ·Ê¹ÓÃÇé¿ö
+        // è®¡ç®—åŸæ–‡ä»¶é—´å€ä½¿ç”¨æƒ…å†µ
         int status0 = 0;
         if (as + (ps > 0? 1: 0) <= 4) {
             status0 = 0;
@@ -351,9 +351,9 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
             status0 = 2;
         }
 
-        // Èç¹ûÔ­ÎÄ¼şµÄ¿éÊı²»ĞèÒªÊ¹ÓÃ¼äÖ·£¬¾ÍÖ±½Ó¶ÁÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content
+        // å¦‚æœåŸæ–‡ä»¶çš„å—æ•°ä¸éœ€è¦ä½¿ç”¨é—´å€ï¼Œå°±ç›´æ¥è¯»æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°content
         if (status0 == 0 && status == 0) {
-            // Ô­À´ÎÄ¼şÇ¡ºÃÌîÂúÁËÒ»Õû¿é£¬¾Í°´ÕÕ×·¼ÓµÄ×Ö·û´®´óĞ¡ËùÕ¼µÄÕû¿éÊıÄÃ¿ÕÏĞ¿é£¬²¢½«Ã¿Ò»¸öblockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+            // åŸæ¥æ–‡ä»¶æ°å¥½å¡«æ»¡äº†ä¸€æ•´å—ï¼Œå°±æŒ‰ç…§è¿½åŠ çš„å­—ç¬¦ä¸²å¤§å°æ‰€å çš„æ•´å—æ•°æ‹¿ç©ºé—²å—ï¼Œå¹¶å°†æ¯ä¸€ä¸ªblockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
             if (ps == 0) {
                 for (int i = 0; i < bs; i++) {
                     int blockId = getFreeBlock();
@@ -368,7 +368,7 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                         pos += BLOCK_SIZE;
                     }
                 }
-                // Èç¹û×·¼ÓµÄ×Ö·û´®ÓĞ¶àÓàÕû¿éµÄ×Ö½Ú£¬¾ÍÔÙÄÃÒ»¸ö¿ÕÏĞ¿é£¬½«blockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+                // å¦‚æœè¿½åŠ çš„å­—ç¬¦ä¸²æœ‰å¤šä½™æ•´å—çš„å­—èŠ‚ï¼Œå°±å†æ‹¿ä¸€ä¸ªç©ºé—²å—ï¼Œå°†blockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
                 if (ls > 0) {
                     int blockId = getFreeBlock();
                     if (blockId < 0) {
@@ -387,9 +387,9 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                 fclose(f);
                 return STATUS_OK;
             } else {
-                // Ô­À´ÎÄ¼ş²»ÊÇÇ¡ºÃÌîÂúÁËÒ»Õû¿é
-                int lps = BLOCK_SIZE - ps; // Ô­ÎÄ¼şµÄ·ÇÂú¿éµÄÊ£Óà¿Õ¼ä
-                // Èç¹û×·¼Ó×Ö·û´®µÄ´óĞ¡Ğ¡ÓÚÔ­ÎÄ¼şµÄ·ÇÂú¿éµÄÊ£Óà¿Õ¼ä£¬Ö±½ÓĞ´Èë£¬²¢ĞŞ¸ÄÎÄ¼ş´óĞ¡ÊôĞÔ
+                // åŸæ¥æ–‡ä»¶ä¸æ˜¯æ°å¥½å¡«æ»¡äº†ä¸€æ•´å—
+                int lps = BLOCK_SIZE - ps; // åŸæ–‡ä»¶çš„éæ»¡å—çš„å‰©ä½™ç©ºé—´
+                // å¦‚æœè¿½åŠ å­—ç¬¦ä¸²çš„å¤§å°å°äºåŸæ–‡ä»¶çš„éæ»¡å—çš„å‰©ä½™ç©ºé—´ï¼Œç›´æ¥å†™å…¥ï¼Œå¹¶ä¿®æ”¹æ–‡ä»¶å¤§å°å±æ€§
                 if (text.size() <= lps) {
                     fseek(f, BLOCK_SIZE * temp->dINode.addr[as] + ps, SEEK_SET);
                     fwrite(text.c_str(), text.size(), 1, f);
@@ -397,15 +397,15 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                     fclose(f);
                     return STATUS_OK;
                 } else {
-                    // Èç¹û×·¼Ó×Ö·û´®µÄ´óĞ¡´óÓÚÔ­ÎÄ¼şµÄ·ÇÂú¿éµÄÊ£Óà¿Õ¼ä£¬ÏÈĞ´Èë×·¼Ó×Ö·û´®Ç¡ºÃÌîÂú·ÇÂú¿éµÄÊ£Óà¿Õ¼äµÄ²¿·Ö
+                    // å¦‚æœè¿½åŠ å­—ç¬¦ä¸²çš„å¤§å°å¤§äºåŸæ–‡ä»¶çš„éæ»¡å—çš„å‰©ä½™ç©ºé—´ï¼Œå…ˆå†™å…¥è¿½åŠ å­—ç¬¦ä¸²æ°å¥½å¡«æ»¡éæ»¡å—çš„å‰©ä½™ç©ºé—´çš„éƒ¨åˆ†
                     fseek(f, BLOCK_SIZE * temp->dINode.addr[as++] + ps, SEEK_SET);
                     fwrite(text.c_str(), lps, 1, f);
                     temp->dINode.fileSize += lps;
-                    int lts = text.size() - lps;  // ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´´óĞ¡
-                    int lbs = lts / BLOCK_SIZE;   // ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´ËùÕ¼µÄÕû¿éÊı
-                    int lls = lts % BLOCK_SIZE;   // ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´ËùÕ¼µÄ¶àÓà×Ö½ÚÊı
+                    int lts = text.size() - lps;  // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™å¤§å°
+                    int lbs = lts / BLOCK_SIZE;   // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™æ‰€å çš„æ•´å—æ•°
+                    int lls = lts % BLOCK_SIZE;   // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
                     int tpos = lps;
-                    // °´ÕÕ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´´óĞ¡ËùÕ¼µÄÕû¿éÊıÄÃ¿ÕÏĞ¿é£¬²¢½«Ã¿Ò»¸öblockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+                    // æŒ‰ç…§è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™å¤§å°æ‰€å çš„æ•´å—æ•°æ‹¿ç©ºé—²å—ï¼Œå¹¶å°†æ¯ä¸€ä¸ªblockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
                     for (int i = 0; i < lbs; i++) {
                         int blockId = getFreeBlock();
                         if (blockId < 0) {
@@ -419,7 +419,7 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                             tpos += BLOCK_SIZE;
                         }
                     }
-                    // Èç¹û×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´´óĞ¡ÓĞ¶àÓàÕû¿éµÄ×Ö½Ú£¬¾ÍÔÙÄÃÒ»¸ö¿ÕÏĞ¿é£¬½«blockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+                    // å¦‚æœè¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™å¤§å°æœ‰å¤šä½™æ•´å—çš„å­—èŠ‚ï¼Œå°±å†æ‹¿ä¸€ä¸ªç©ºé—²å—ï¼Œå°†blockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
                     if (lls > 0) {
                         int blockId = getFreeBlock();
                         if (blockId < 0) {
@@ -440,10 +440,10 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                 }
             }
         } else if (status0 == 0 && status == 1) {
-        // Èç¹ûÔ­ÎÄ¼şÃ»ÓĞÊ¹ÓÃ¼äÖ·£¬×·¼ÓºóĞèÒªÊ¹ÓÃÒ»¼¶¼äÖ·
-            // Ô­À´ÎÄ¼şÇ¡ºÃÌîÂúÁËÒ»Õû¿é£¬¾Í°´ÕÕ×·¼ÓµÄ×Ö·û´®´óĞ¡ËùÕ¼µÄÕû¿éÊıÄÃ¿ÕÏĞ¿é£¬²¢½«Ã¿Ò»¸öblockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+        // å¦‚æœåŸæ–‡ä»¶æ²¡æœ‰ä½¿ç”¨é—´å€ï¼Œè¿½åŠ åéœ€è¦ä½¿ç”¨ä¸€çº§é—´å€
+            // åŸæ¥æ–‡ä»¶æ°å¥½å¡«æ»¡äº†ä¸€æ•´å—ï¼Œå°±æŒ‰ç…§è¿½åŠ çš„å­—ç¬¦ä¸²å¤§å°æ‰€å çš„æ•´å—æ•°æ‹¿ç©ºé—²å—ï¼Œå¹¶å°†æ¯ä¸€ä¸ªblockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
             if (ps == 0) {
-                // ÏÈÊ¹ÓÃÍêÖ±½Ó¿éºÅµÄ²¿·Ö
+                // å…ˆä½¿ç”¨å®Œç›´æ¥å—å·çš„éƒ¨åˆ†
                 int remainDirectBlockNum = 4 - as;
                 for (int i = 0; i < remainDirectBlockNum; i++) {
                     int blockId = getFreeBlock();
@@ -458,37 +458,37 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                         pos += BLOCK_SIZE;
                     }
                 }
-                // ÉêÇëÒ»¸ö¿ÕÏĞblockÓÃ×÷´æÒ»¼¶Õ»
+                // ç”³è¯·ä¸€ä¸ªç©ºé—²blockç”¨ä½œå­˜ä¸€çº§æ ˆ
                 int blockId = getFreeBlock();
                 int remainBlockNum = totalBlockNum - 4;
-                (temp -> dINode).addr[4] = blockId; // Ğ´ÈëµØÖ·Êı×éµÄµÚ5Ïî£¨Ò»¼¶¼äÖ·£©
+                (temp -> dINode).addr[4] = blockId; // å†™å…¥åœ°å€æ•°ç»„çš„ç¬¬5é¡¹ï¼ˆä¸€çº§é—´å€ï¼‰
                 vector<unsigned int> firstStackBlocks[remainBlockNum];
-                // ÎªÊ£ÓàÃ¿Ò»¸öĞèÒª´æ½øÒ»¼¶Õ»µÄ£¨¿é£©£¬ÉêÇëÒ»¸ö¿ÕÏĞ¿é£¬²¢Ğ´Èë£¬Í¬Ê±µ÷Õûpos
+                // ä¸ºå‰©ä½™æ¯ä¸€ä¸ªéœ€è¦å­˜è¿›ä¸€çº§æ ˆçš„ï¼ˆå—ï¼‰ï¼Œç”³è¯·ä¸€ä¸ªç©ºé—²å—ï¼Œå¹¶å†™å…¥ï¼ŒåŒæ—¶è°ƒæ•´pos
                 for (int p = 0; p < remainBlockNum; p ++) {
                     int blockIdFir = getFreeBlock();
                     if (blockIdFir < 0) {
                         fclose(f);
                         return blockIdFir;
                     } else {
-                        // ÉêÇëµ½¿ÕÏĞ¿éºóĞ´ÈëÒ»¼¶Õ»Êı×é
+                        // ç”³è¯·åˆ°ç©ºé—²å—åå†™å…¥ä¸€çº§æ ˆæ•°ç»„
                         firstStackBlocks -> push_back(blockIdFir);
-                        // Ğ´Êı¾İ
+                        // å†™æ•°æ®
                         fseek(f, BLOCK_SIZE * blockIdFir, SEEK_SET);
                         fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
                         (temp -> dINode).fileSize += BLOCK_SIZE;
                         pos += BLOCK_SIZE;
                     }
                 }
-                // Èç¹û×·¼ÓµÄ×Ö·û´®ÓĞ¶àÓàÕû¿éµÄ×Ö½Ú£¬¾ÍÔÙÄÃÒ»¸ö¿ÕÏĞ¿é£¬½«blockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+                // å¦‚æœè¿½åŠ çš„å­—ç¬¦ä¸²æœ‰å¤šä½™æ•´å—çš„å­—èŠ‚ï¼Œå°±å†æ‹¿ä¸€ä¸ªç©ºé—²å—ï¼Œå°†blockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
                 if (ls > 0) {
                     int blockIdLeft = getFreeBlock();
                     if (blockIdLeft < 0) {
                         fclose(f);
                         return blockIdLeft;
                     } else {
-                        // ÉêÇëµ½¿ÕÏĞ¿éºóĞ´ÈëÒ»¼¶Õ»Êı×é
+                        // ç”³è¯·åˆ°ç©ºé—²å—åå†™å…¥ä¸€çº§æ ˆæ•°ç»„
                         firstStackBlocks -> push_back(blockIdLeft);
-                        // Ğ´Êı¾İ
+                        // å†™æ•°æ®
                         fseek(f, BLOCK_SIZE * blockIdLeft, SEEK_SET);
                         fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
                         (temp -> dINode).fileSize += ls;
@@ -500,77 +500,136 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
                 fclose(f);
                 return STATUS_OK;
             } else {
-                // Ô­À´ÎÄ¼ş²»ÊÇÇ¡ºÃÌîÂúÁËÒ»Õû¿é
-                int lps = BLOCK_SIZE - ps; // Ô­ÎÄ¼şµÄ·ÇÂú¿éµÄÊ£Óà¿Õ¼ä
-                // ÒòÎªÔ­ÎÄ¼şÎ´Ê¹ÓÃ¼äÖ·£¬Ğ´Èëºó½«Ê¹ÓÃ¼äÖ·£¬ËùÒÔ²»´æÔÚ×·¼Ó×Ö·û´®µÄ´óĞ¡Ğ¡ÓÚÔ­ÎÄ¼şµÄ·ÇÂú¿éµÄÊ£Óà¿Õ¼äµÄÇé¿ö
-                // ÏÈĞ´Èë×·¼Ó×Ö·û´®Ç¡ºÃÌîÂú·ÇÂú¿éµÄÊ£Óà¿Õ¼äµÄ²¿·Ö
+                // åŸæ¥æ–‡ä»¶ä¸æ˜¯æ°å¥½å¡«æ»¡äº†ä¸€æ•´å—
+                int lps = BLOCK_SIZE - ps; // åŸæ–‡ä»¶çš„éæ»¡å—çš„å‰©ä½™ç©ºé—´
+                // å› ä¸ºåŸæ–‡ä»¶æœªä½¿ç”¨é—´å€ï¼Œå†™å…¥åå°†ä½¿ç”¨é—´å€ï¼Œæ‰€ä»¥ä¸å­˜åœ¨è¿½åŠ å­—ç¬¦ä¸²çš„å¤§å°å°äºåŸæ–‡ä»¶çš„éæ»¡å—çš„å‰©ä½™ç©ºé—´çš„æƒ…å†µ
+                // å…ˆå†™å…¥è¿½åŠ å­—ç¬¦ä¸²æ°å¥½å¡«æ»¡éæ»¡å—çš„å‰©ä½™ç©ºé—´çš„éƒ¨åˆ†
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[as ++] + ps, SEEK_SET);
                 fwrite(text.substr(pos, ls).c_str(), lps, 1, f);
                 temp -> dINode.fileSize += lps;
                 pos += lps;
 
-                int lts = text.size() - lps;  // ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´´óĞ¡
-                int lbs = lts / BLOCK_SIZE;   // ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´ËùÕ¼µÄÕû¿éÊı
-                int lls = lts % BLOCK_SIZE;   // ×·¼Ó×Ö·ûÊ£ÓàÎ´Ğ´ËùÕ¼µÄ¶àÓà×Ö½ÚÊı
+                int lts = text.size() - lps;  // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™å¤§å°
+                int lbs = lts / BLOCK_SIZE;   // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™æ‰€å çš„æ•´å—æ•°
+                int lls = lts % BLOCK_SIZE;   // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
                 int tpos = lps;
-                // ÉêÇëÒ»¸ö¿ÕÏĞ¿é´æ´¢Ò»¼¶Õ»
+                // ç”³è¯·ä¸€ä¸ªç©ºé—²å—å­˜å‚¨ä¸€çº§æ ˆ
                 int blockId = getFreeBlock();
                 int remainBlockNum = totalBlockNum - 4;
-                (temp -> dINode).addr[4] = blockId; // Ğ´ÈëµØÖ·Êı×éµÄµÚ5Ïî£¨Ò»¼¶¼äÖ·£©
+                (temp -> dINode).addr[4] = blockId; // å†™å…¥åœ°å€æ•°ç»„çš„ç¬¬5é¡¹ï¼ˆä¸€çº§é—´å€ï¼‰
                 vector<unsigned int> firstStackBlocks;
-                // ÎªÊ£ÓàÃ¿Ò»¸öĞèÒª´æ½øÒ»¼¶Õ»µÄ£¨¿é£©£¬ÉêÇëÒ»¸ö¿ÕÏĞ¿é£¬²¢Ğ´Èë£¬Í¬Ê±µ÷Õûpos
+                // ä¸ºå‰©ä½™æ¯ä¸€ä¸ªéœ€è¦å­˜è¿›ä¸€çº§æ ˆçš„ï¼ˆå—ï¼‰ï¼Œç”³è¯·ä¸€ä¸ªç©ºé—²å—ï¼Œå¹¶å†™å…¥ï¼ŒåŒæ—¶è°ƒæ•´pos
                 for (int p = 0; p < remainBlockNum; p ++) {
                     int blockIdFir = getFreeBlock();
                     if (blockIdFir < 0) {
                         fclose(f);
                         return blockIdFir;
                     } else {
-                        // ÉêÇëµ½¿ÕÏĞ¿éºóĞ´ÈëÒ»¼¶Õ»Êı×é
+                        // ç”³è¯·åˆ°ç©ºé—²å—åå†™å…¥ä¸€çº§æ ˆæ•°ç»„
                         firstStackBlocks.push_back(blockIdFir);
-                        // Ğ´Êı¾İ
+                        // å†™æ•°æ®
                         fseek(f, BLOCK_SIZE * blockIdFir, SEEK_SET);
                         fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
                         (temp -> dINode).fileSize += BLOCK_SIZE;
                         pos += BLOCK_SIZE;
                     }
                 }
-                // Èç¹û×·¼ÓµÄ×Ö·û´®ÓĞ¶àÓàÕû¿éµÄ×Ö½Ú£¬¾ÍÔÙÄÃÒ»¸ö¿ÕÏĞ¿é£¬½«blockId¼ÓÈëÔ­ÎÄ¼şµÄµØÖ·Êı×é
+                // å¦‚æœè¿½åŠ çš„å­—ç¬¦ä¸²æœ‰å¤šä½™æ•´å—çš„å­—èŠ‚ï¼Œå°±å†æ‹¿ä¸€ä¸ªç©ºé—²å—ï¼Œå°†blockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
                 if (totalLeft > 0) {
                     int blockIdLeft = getFreeBlock();
                     if (blockIdLeft < 0) {
                         fclose(f);
                         return blockIdLeft;
                     } else {
-                        // ÉêÇëµ½¿ÕÏĞ¿éºóĞ´ÈëÒ»¼¶Õ»Êı×é
+                        // ç”³è¯·åˆ°ç©ºé—²å—åå†™å…¥ä¸€çº§æ ˆæ•°ç»„
                         firstStackBlocks.push_back(blockIdLeft);
-                        // Ğ´Êı¾İ
+//                        cout << sizeof(decltype(firstStackBlocks)::value_type)* firstStackBlocks.size() << endl;
+                        // å†™æ•°æ®
                         fseek(f, BLOCK_SIZE * blockIdLeft, SEEK_SET);
                         fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
                         (temp -> dINode).fileSize += ls;
                         pos += ls;
                     }
                     fclose(f);
-                    return STATUS_OK;
+//                    return STATUS_OK;
                 }
-                // Ò»¼¶Õ»Ğ´»Ø´ÅÅÌ
+                // ä¸€çº§æ ˆå†™å›ç£ç›˜
                 fseek(f, BLOCK_SIZE * blockId, SEEK_SET);
+//                cout << sizeof(decltype(firstStackBlocks)::value_type)* firstStackBlocks.size() << endl;
                 fwrite(firstStackBlocks.data(),sizeof(decltype(firstStackBlocks)::value_type)* firstStackBlocks.size(), 1, f);
                 // fwrite(firstStackBlocks, sizeof(firstStackBlocks), 1, f);
 
                 fclose(f);
                 return STATUS_OK;
             }
-        } else if (status0 == 0 && status == 2) {
-
-        } else if (status0 == 1 && status == 0) {
-
+//        } else if (status0 == 0 && status == 2) {
         } else if (status0 == 1 && status == 1) {
+        // å¦‚æœåŸæ–‡ä»¶ä½¿ç”¨äº†ä¸€çº§é—´å€ï¼Œè¿½åŠ åè¿˜åœ¨ä¸€çº§é—´å€çš„èŒƒç•´
+            int lps = BLOCK_SIZE - ps; // åŸæ–‡ä»¶çš„éæ»¡å—çš„å‰©ä½™ç©ºé—´
+            // è¯»å‡ºä¸€çº§æ ˆæ‰€åœ¨çš„å—å·ï¼Œä»è€Œè·å–ä¸€çº§æ ˆå†…å®¹
+            int firstStackBlockId = temp -> dINode.addr[4];
+            vector<unsigned int> firstStackBlocks;
+            firstStackBlocks.reserve(as - 4 + 1);
+            firstStackBlocks.resize(as - 4 + 1);
+            fseek(f, BLOCK_SIZE * firstStackBlockId, SEEK_SET);
+            int size = sizeof(decltype(firstStackBlocks)::value_type)* firstStackBlocks.size();
+            fwrite(firstStackBlocks.data(), size, 1, f);
+            int firstStackEndBlockId = firstStackBlocks[as - 4];
+            // å…ˆå†™å…¥è¿½åŠ å­—ç¬¦ä¸²æ°å¥½å¡«æ»¡éæ»¡å—çš„å‰©ä½™ç©ºé—´çš„éƒ¨åˆ†
+            fseek(f, BLOCK_SIZE * firstStackEndBlockId, SEEK_SET);
+            fwrite(text.substr(pos, ls).c_str(), lps, 1, f);
+            temp -> dINode.fileSize += lps;
+            pos += lps;
+
+            int lts = text.size() - lps;  // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™å¤§å°
+            int lbs = lts / BLOCK_SIZE;   // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™æ‰€å çš„æ•´å—æ•°
+            int lls = lts % BLOCK_SIZE;   // è¿½åŠ å­—ç¬¦å‰©ä½™æœªå†™æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
+            int tpos = lps;
+
+            int remainBlockNum = totalBlockNum - as -1;
+            // ä¸ºå‰©ä½™æ¯ä¸€ä¸ªéœ€è¦å­˜è¿›ä¸€çº§æ ˆçš„ï¼ˆå—ï¼‰ï¼Œç”³è¯·ä¸€ä¸ªç©ºé—²å—ï¼Œå¹¶å†™å…¥ï¼ŒåŒæ—¶è°ƒæ•´pos
+            for (int p = 0; p < remainBlockNum; p ++) {
+                int blockIdFir = getFreeBlock();
+                if (blockIdFir < 0) {
+                    fclose(f);
+                    return blockIdFir;
+                } else {
+                    // ç”³è¯·åˆ°ç©ºé—²å—åå†™å…¥ä¸€çº§æ ˆæ•°ç»„
+                    firstStackBlocks.push_back(blockIdFir);
+                    // å†™æ•°æ®
+                    fseek(f, BLOCK_SIZE * blockIdFir, SEEK_SET);
+                    fwrite(text.substr(pos, BLOCK_SIZE).c_str(), BLOCK_SIZE, 1, f);
+                    (temp -> dINode).fileSize += BLOCK_SIZE;
+                    pos += BLOCK_SIZE;
+                }
+            }
+            // å¦‚æœè¿½åŠ çš„å­—ç¬¦ä¸²æœ‰å¤šä½™æ•´å—çš„å­—èŠ‚ï¼Œå°±å†æ‹¿ä¸€ä¸ªç©ºé—²å—ï¼Œå°†blockIdåŠ å…¥åŸæ–‡ä»¶çš„åœ°å€æ•°ç»„
+            if (totalLeft > 0) {
+                int blockIdLeft = getFreeBlock();
+                if (blockIdLeft < 0) {
+                    fclose(f);
+                    return blockIdLeft;
+                } else {
+                    // ç”³è¯·åˆ°ç©ºé—²å—åå†™å…¥ä¸€çº§æ ˆæ•°ç»„
+                    firstStackBlocks.push_back(blockIdLeft);
+                    // å†™æ•°æ®
+                    fseek(f, BLOCK_SIZE * blockIdLeft, SEEK_SET);
+                    fwrite(text.substr(pos, ls).c_str(), BLOCK_SIZE, 1, f);
+                    (temp -> dINode).fileSize += ls;
+                    pos += ls;
+                }
+                fclose(f);
+                return STATUS_OK;
+            }
+            // ä¸€çº§æ ˆå†™å›ç£ç›˜
+            fseek(f, BLOCK_SIZE * firstStackBlockId, SEEK_SET);
+            fwrite(firstStackBlocks.data(),sizeof(decltype(firstStackBlocks)::value_type)* firstStackBlocks.size(), 1, f);
+            // fwrite(firstStackBlocks, sizeof(firstStackBlocks), 1, f);
+
+            fclose(f);
+            return STATUS_OK;
 
         } else if (status0 == 1 && status == 2) {
-
-        } else if (status0 == 2 && status == 0) {
-
-        } else if (status0 == 2 && status == 1) {
 
         } else if (status0 == 2 && status == 2) {
 
@@ -578,18 +637,18 @@ int UnixFIleSys :: writeText(INode* temp, const string& text) {
     }
 }
 
-// ¶Átext
-// Ö÷Òª¿¼ÂÇÊÇ·ñÓĞ¿éÍâ×Ö½Ú£¬¸ù¾İ´«ÈëµÄINodeĞÅÏ¢ÖĞµÄµØÖ·Êı×éÕÒµ½´æ´¢¿é£¬¶Á³öÃ¿Ò»¿éµÄÄÚÈİ
+// è¯»text
+// ä¸»è¦è€ƒè™‘æ˜¯å¦æœ‰å—å¤–å­—èŠ‚ï¼Œæ ¹æ®ä¼ å…¥çš„INodeä¿¡æ¯ä¸­çš„åœ°å€æ•°ç»„æ‰¾åˆ°å­˜å‚¨å—ï¼Œè¯»å‡ºæ¯ä¸€å—çš„å†…å®¹
 int UnixFIleSys :: readText(INode *temp) {
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == NULL)
         return STATUS_FILE_OPEN_ERROR;
     else {
-        int as = temp -> dINode.fileSize / BLOCK_SIZE;  // ÎÄ¼ş´óĞ¡ËùÕ¼µÄÕû¿éÊı
-        int ls = temp -> dINode.fileSize % BLOCK_SIZE;  // ÎÄ¼ş´óĞ¡ËùÕ¼µÄ¶àÓà×Ö½ÚÊı
+        int as = temp -> dINode.fileSize / BLOCK_SIZE;  // æ–‡ä»¶å¤§å°æ‰€å çš„æ•´å—æ•°
+        int ls = temp -> dINode.fileSize % BLOCK_SIZE;  // æ–‡ä»¶å¤§å°æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
         char content[BLOCK_SIZE];
-        // Èç¹ûÔ­ÎÄ¼şµÄ¿éÊı²»ĞèÒªÊ¹ÓÃ¼äÖ·£¬¾ÍÖ±½Ó¶ÁÃ¿Ò»¸öÕû¿é£¬Êä³ö
-        if (as <= 4) {
+        // å¦‚æœåŸæ–‡ä»¶çš„å—æ•°ä¸éœ€è¦ä½¿ç”¨é—´å€ï¼Œå°±ç›´æ¥è¯»æ¯ä¸€ä¸ªæ•´å—ï¼Œè¾“å‡º
+        if (as < 4 || as == 4 && ls == 0) {
             int i = 0;
             for (; i < as; i ++) {
                 memset(content, '\0', sizeof(content));
@@ -597,7 +656,7 @@ int UnixFIleSys :: readText(INode *temp) {
                 fread(content, BLOCK_SIZE, 1, f);
                 cout << content;
             }
-            // Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½Ú
+            // å¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚
             if (ls > 0) {
                 memset(content, '\0', sizeof(content));
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
@@ -605,28 +664,28 @@ int UnixFIleSys :: readText(INode *temp) {
                 for (int p = 0; p < ls; p ++)
                     cout << content[p];
             }
-        } else if(as >= 5 && as <= 132) {
-            // Èç¹ûÖ»ÓÃµ½ÁËÒ»¼¶¼äÖ·,ÏÈ¶ÁÖ±½ÓµØÖ·µÄÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content,ÔÙÈ¥Ò»¼¶Õ»¶ÁÃ¿Ò»¿éµÄÄÚÈİ£¬Êä³ö
-            // ÏÈ¶ÁÖ±½ÓµØÖ·µÄÃ¿Ò»¸öÕû¿é£¬Êä³ö
+        } else if(as > 4 && as <= 132 || as == 4 && ls != 0) {
+            // å¦‚æœåªç”¨åˆ°äº†ä¸€çº§é—´å€,å…ˆè¯»ç›´æ¥åœ°å€çš„æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°content,å†å»ä¸€çº§æ ˆè¯»æ¯ä¸€å—çš„å†…å®¹ï¼Œè¾“å‡º
+            // å…ˆè¯»ç›´æ¥åœ°å€çš„æ¯ä¸€ä¸ªæ•´å—ï¼Œè¾“å‡º
             for (int i = 0; i < 4; i ++) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 cout << content;
             }
-            // ¶ÁÒ»¼¶Õ»ËùÔÚµÄ¿éºÅ£¬²¢¶¨Î»µ½Ò»¼¶Õ»£¬¶Á³öÆäÖĞµÄÖ±½Ó¿éºÅÊı×é
+            // è¯»ä¸€çº§æ ˆæ‰€åœ¨çš„å—å·ï¼Œå¹¶å®šä½åˆ°ä¸€çº§æ ˆï¼Œè¯»å‡ºå…¶ä¸­çš„ç›´æ¥å—å·æ•°ç»„
             int mid1BlockId = temp -> dINode.addr[4];
             fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
-            int blockNumInFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4; // Í¨¹ıÎÄ¼ş´óĞ¡¼ÆËãÔÚÒ»¼¶¼äÖ·ÖĞÊ¹ÓÃÁË¼¸¸öblock
+            int blockNumInFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 + 1; // é€šè¿‡æ–‡ä»¶å¤§å°è®¡ç®—åœ¨ä¸€çº§é—´å€ä¸­ä½¿ç”¨äº†å‡ ä¸ªblock
             unsigned int blocksInFirstStack[128];
             fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
             int i = 0;
             for (; i < blockNumInFirstStack; i ++) {
-                // ¶Á³öÒ»¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅ²¢¶Á³öÆäÖĞÄÚÈİ£¬Êä³ö
+                // è¯»å‡ºä¸€çº§æ ˆä¸­çš„ç›´æ¥å—å·å¹¶è¯»å‡ºå…¶ä¸­å†…å®¹ï¼Œè¾“å‡º
                 fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 cout << content;
             }
-            // Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½Ú
+            // å¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚
             if (ls > 0) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, ls, 1, f);
@@ -634,44 +693,44 @@ int UnixFIleSys :: readText(INode *temp) {
                     cout << content[p];
             }
         } else if (as > 132) {
-            // Èç¹ûÓÃµ½ÁË¶ş¼¶¼äÖ·
-            // ÏÈ¶ÁÖ±½ÓµØÖ·µÄÃ¿Ò»¸öÕû¿é£¬Êä³ö
+            // å¦‚æœç”¨åˆ°äº†äºŒçº§é—´å€
+            // å…ˆè¯»ç›´æ¥åœ°å€çš„æ¯ä¸€ä¸ªæ•´å—ï¼Œè¾“å‡º
             for (int i = 0; i < 4; i ++) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 cout << content;
             }
-            // ¶ÁÒ»¼¶Õ»ËùÔÚµÄ¿éºÅ£¬²¢¶¨Î»µ½Ò»¼¶Õ»£¬¶Á³öÆäÖĞµÄ¶ş¼¶Õ»ËùÔÚµÄ¿éµÄ¿éºÅÊı×é
+            // è¯»ä¸€çº§æ ˆæ‰€åœ¨çš„å—å·ï¼Œå¹¶å®šä½åˆ°ä¸€çº§æ ˆï¼Œè¯»å‡ºå…¶ä¸­çš„äºŒçº§æ ˆæ‰€åœ¨çš„å—çš„å—å·æ•°ç»„
             int mid1BlockId = temp -> dINode.addr[4];
             fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
             unsigned int blocksInFirstStack[128];
             fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
-            // ¶ÔÓÚÒ»¼¶Õ»ÔªËØÎ»ÖÃ·Ç×îÎ²£¨Æä¶ÔÓ¦µÄ¶ş¼¶Õ»²»¿ÉÄÜ³öÏÖ¿ÕÏ¶£©
+            // å¯¹äºä¸€çº§æ ˆå…ƒç´ ä½ç½®éæœ€å°¾ï¼ˆå…¶å¯¹åº”çš„äºŒçº§æ ˆä¸å¯èƒ½å‡ºç°ç©ºéš™ï¼‰
             for (int i = 0; i < 128 - 1; i ++) {
-                // ¶Á³öÒ»¼¶Õ»ÖĞµÄ¶ş¼¶Õ»ËùÔÚµÄ¿éµÄ¿éºÅ£¬²¢¶¨Î»µ½¶ÔÓ¦¶ş¼¶Õ»£¬¶Á³ö¶ş¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅÊı×é
+                // è¯»å‡ºä¸€çº§æ ˆä¸­çš„äºŒçº§æ ˆæ‰€åœ¨çš„å—çš„å—å·ï¼Œå¹¶å®šä½åˆ°å¯¹åº”äºŒçº§æ ˆï¼Œè¯»å‡ºäºŒçº§æ ˆä¸­çš„ç›´æ¥å—å·æ•°ç»„
                 fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
                 unsigned int blocksInSecStack[128];
                 fread(blocksInSecStack, BLOCK_SIZE, 1, f);
                 for (int j = 0; j < 128; j ++) {
-                    // ¶Á³ö¶ş¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅ²¢¶Á³öÆäÖĞÄÚÈİ£¬Êä³ö
+                    // è¯»å‡ºäºŒçº§æ ˆä¸­çš„ç›´æ¥å—å·å¹¶è¯»å‡ºå…¶ä¸­å†…å®¹ï¼Œè¾“å‡º
                     fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
                     fread(content, BLOCK_SIZE, 1, f);
                     cout << content;
                 }
             }
-            // ¶ÔÓÚÒ»¼¶Õ»ÔªËØÎ»ÖÃ×îÎ²£¨Æä¶ÔÓ¦µÄ¶ş¼¶Õ»¿ÉÄÜ³öÏÖ¿ÕÏ¶£©
+            // å¯¹äºä¸€çº§æ ˆå…ƒç´ ä½ç½®æœ€å°¾ï¼ˆå…¶å¯¹åº”çš„äºŒçº§æ ˆå¯èƒ½å‡ºç°ç©ºéš™ï¼‰
             fseek(f, BLOCK_SIZE * blocksInFirstStack[128], SEEK_SET);
             unsigned int blocksInSecStack[128];
             fread(blocksInSecStack, BLOCK_SIZE, 1, f);
-            int blockNumInLastFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 - 127 * 128; // ¼ÆËãÒ»¼¶Õ»ÔªËØÎ»ÖÃ×îÎ²¶ÔÓ¦µÄ¶ş¼¶Õ»Ê¹ÓÃµÄblockNum
+            int blockNumInLastFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 - 127 * 128; // è®¡ç®—ä¸€çº§æ ˆå…ƒç´ ä½ç½®æœ€å°¾å¯¹åº”çš„äºŒçº§æ ˆä½¿ç”¨çš„blockNum
             int j = 0;
             for (; j < blockNumInLastFirstStack; j ++) {
-                // ¶Á³ö¶ş¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅ²¢¶Á³öÆäÖĞÄÚÈİ£¬Êä³ö
+                // è¯»å‡ºäºŒçº§æ ˆä¸­çš„ç›´æ¥å—å·å¹¶è¯»å‡ºå…¶ä¸­å†…å®¹ï¼Œè¾“å‡º
                 fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 cout << content;
             }
-            // Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½Ú
+            // å¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚
             if (ls > 0) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[j], SEEK_SET);
                 fread(content, ls, 1, f);
@@ -685,10 +744,10 @@ int UnixFIleSys :: readText(INode *temp) {
 
 }
 
-// ¹é»¹¿ÕÏĞ¿é
-// ¸ù¾İblockId×ö¹é»¹²Ù×÷£¬ĞŞ¸Ä³¬¼¶¿éµÄĞÅÏ¢£¬ĞŞ¸ÄºóĞ´³¬¼¶¿é
+// å½’è¿˜ç©ºé—²å—
+// æ ¹æ®blockIdåšå½’è¿˜æ“ä½œï¼Œä¿®æ”¹è¶…çº§å—çš„ä¿¡æ¯ï¼Œä¿®æ”¹åå†™è¶…çº§å—
 int UnixFIleSys :: returnFreeBlock(unsigned int blockId) {
-    // Èç¹ûµ±Ç°×é»¹ÓĞ¿Õ£¬¾Í¹é»¹ÔÚµ±Ç°×é
+    // å¦‚æœå½“å‰ç»„è¿˜æœ‰ç©ºï¼Œå°±å½’è¿˜åœ¨å½“å‰ç»„
     if (sp -> nextFreeBlock <= 18) {
         sp -> freeBlockNum ++;
         sp -> nextFreeBlock ++;
@@ -696,7 +755,7 @@ int UnixFIleSys :: returnFreeBlock(unsigned int blockId) {
         writeSuperBlock();
         return STATUS_OK;
     } else {
-    // Èç¹ûµ±Ç°×éÎŞ¿Õ£¬È¡³öÏÂÒ»×é£¬¹é»¹µ½ÏÂÒ»×é
+    // å¦‚æœå½“å‰ç»„æ— ç©ºï¼Œå–å‡ºä¸‹ä¸€ç»„ï¼Œå½’è¿˜åˆ°ä¸‹ä¸€ç»„
         FILE *f = fopen(FILE_PATH, "rb+");
         if (f == NULL)
             return STATUS_FILE_OPEN_ERROR;
@@ -707,7 +766,7 @@ int UnixFIleSys :: returnFreeBlock(unsigned int blockId) {
             fwrite(&sp -> freeBlock, sizeof(sp -> freeBlock), 1, f);
             fclose(f);
             sp -> freeBlockNum += 2;
-            sp -> freeBlock[0] = sp -> freeBlock[0] - BLOCK_GROUP_SIZE * 2; // ´æ´¢ÉÏÒ»¸ö¿ÕÏĞÅÌµÄÊ×Î»ÅÌ¿éºÅ
+            sp -> freeBlock[0] = sp -> freeBlock[0] - BLOCK_GROUP_SIZE * 2; // å­˜å‚¨ä¸Šä¸€ä¸ªç©ºé—²ç›˜çš„é¦–ä½ç›˜å—å·
             sp -> freeBlock[1] = blockId;
             sp -> nextFreeBlock = 1;
             writeSuperBlock();
@@ -716,28 +775,28 @@ int UnixFIleSys :: returnFreeBlock(unsigned int blockId) {
     }
 }
 
-// ¹é»¹INode
-// ĞŞ¸Ä³¬¼¶¿éĞÅÏ¢£¬È»ºóĞ´³¬¼¶¿é
+// å½’è¿˜INode
+// ä¿®æ”¹è¶…çº§å—ä¿¡æ¯ï¼Œç„¶åå†™è¶…çº§å—
 int UnixFIleSys :: returnFreeINode(unsigned int iNodeId) {
     sp -> freeINodeNum ++;
     sp -> nextFreeINode ++;
-    sp -> freeINode[sp -> nextFreeINode] = iNodeId; // Ğ´ÈëÕâ¸ö¹é»¹ÁËµÄINodeId
+    sp -> freeINode[sp -> nextFreeINode] = iNodeId; // å†™å…¥è¿™ä¸ªå½’è¿˜äº†çš„INodeId
     writeSuperBlock();
     return STATUS_OK;
 }
 
-// ¶Átext
-// Í¨¹ıINodeId¶ÁÈ¡ÎÄ¼ş´óĞ¡ĞÅÏ¢ºÍµØÖ·ĞÅÏ¢£¬ÏÈ¶ÁÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content£¬Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½ÚÒ²¶Á³ö×·¼Ó
+// è¯»text
+// é€šè¿‡INodeIdè¯»å–æ–‡ä»¶å¤§å°ä¿¡æ¯å’Œåœ°å€ä¿¡æ¯ï¼Œå…ˆè¯»æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°contentï¼Œå¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚ä¹Ÿè¯»å‡ºè¿½åŠ 
 string UnixFIleSys :: getText(INode* temp) {
     string text;
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == NULL)
         return "";
     else {
-        int as = temp -> dINode.fileSize / BLOCK_SIZE;  // ÎÄ¼ş´óĞ¡ËùÕ¼µÄÕû¿éÊı
-        int ls = temp -> dINode.fileSize % BLOCK_SIZE;  // ÎÄ¼ş´óĞ¡ËùÕ¼µÄ¶àÓà×Ö½ÚÊı
+        int as = temp -> dINode.fileSize / BLOCK_SIZE;  // æ–‡ä»¶å¤§å°æ‰€å çš„æ•´å—æ•°
+        int ls = temp -> dINode.fileSize % BLOCK_SIZE;  // æ–‡ä»¶å¤§å°æ‰€å çš„å¤šä½™å­—èŠ‚æ•°
         char content[BLOCK_SIZE];
-        // Èç¹ûÔ­ÎÄ¼şµÄ¿éÊı²»ĞèÒªÊ¹ÓÃ¼äÖ·£¬¾ÍÖ±½Ó¶ÁÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content
+        // å¦‚æœåŸæ–‡ä»¶çš„å—æ•°ä¸éœ€è¦ä½¿ç”¨é—´å€ï¼Œå°±ç›´æ¥è¯»æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°content
         if (as <= 4) {
             int i = 0;
             for (; i < as; i ++) {
@@ -745,7 +804,7 @@ string UnixFIleSys :: getText(INode* temp) {
                 fread(content, BLOCK_SIZE, 1, f);
                 text += content;
             }
-            // Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½Ú
+            // å¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚
             if (ls > 0) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, ls, 1, f);
@@ -753,27 +812,27 @@ string UnixFIleSys :: getText(INode* temp) {
                     text += content[p];
             }
         } else if(as == 5) {
-        // Èç¹ûÖ»ÓÃµ½ÁËÒ»¼¶¼äÖ·,ÏÈ¶ÁÖ±½ÓµØÖ·µÄÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content,ÔÙÈ¥Ò»¼¶Õ»¶ÁÃ¿Ò»¿éµÄÄÚÈİ£¬×·¼Óµ½content
-            // ÏÈ¶ÁÖ±½ÓµØÖ·µÄÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content
+        // å¦‚æœåªç”¨åˆ°äº†ä¸€çº§é—´å€,å…ˆè¯»ç›´æ¥åœ°å€çš„æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°content,å†å»ä¸€çº§æ ˆè¯»æ¯ä¸€å—çš„å†…å®¹ï¼Œè¿½åŠ åˆ°content
+            // å…ˆè¯»ç›´æ¥åœ°å€çš„æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°content
             for (int i = 0; i < 4; i ++) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 text += content;
             }
-            // ¶ÁÒ»¼¶Õ»ËùÔÚµÄ¿éºÅ£¬²¢¶¨Î»µ½Ò»¼¶Õ»£¬¶Á³öÆäÖĞµÄÖ±½Ó¿éºÅÊı×é
+            // è¯»ä¸€çº§æ ˆæ‰€åœ¨çš„å—å·ï¼Œå¹¶å®šä½åˆ°ä¸€çº§æ ˆï¼Œè¯»å‡ºå…¶ä¸­çš„ç›´æ¥å—å·æ•°ç»„
             int mid1BlockId = temp -> dINode.addr[4];
             fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
-            int blockNumInFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4; // Í¨¹ıÎÄ¼ş´óĞ¡¼ÆËãÔÚÒ»¼¶¼äÖ·ÖĞÊ¹ÓÃÁË¼¸¸öblock
+            int blockNumInFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4; // é€šè¿‡æ–‡ä»¶å¤§å°è®¡ç®—åœ¨ä¸€çº§é—´å€ä¸­ä½¿ç”¨äº†å‡ ä¸ªblock
             unsigned int blocksInFirstStack[128];
             fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
             int i = 0;
             for (; i < blockNumInFirstStack; i ++) {
-                // ¶Á³öÒ»¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅ²¢¶Á³öÆäÖĞÄÚÈİ£¬×·¼Óµ½content
+                // è¯»å‡ºä¸€çº§æ ˆä¸­çš„ç›´æ¥å—å·å¹¶è¯»å‡ºå…¶ä¸­å†…å®¹ï¼Œè¿½åŠ åˆ°content
                 fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 text += content;
             }
-            // Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½Ú
+            // å¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚
             if (ls > 0) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, ls, 1, f);
@@ -781,44 +840,44 @@ string UnixFIleSys :: getText(INode* temp) {
                     text += content[p];
             }
         } else if (as == 6) {
-        // Èç¹ûÓÃµ½ÁË¶ş¼¶¼äÖ·
-            // ÏÈ¶ÁÖ±½ÓµØÖ·µÄÃ¿Ò»¸öÕû¿é£¬×·¼Óµ½content
+        // å¦‚æœç”¨åˆ°äº†äºŒçº§é—´å€
+            // å…ˆè¯»ç›´æ¥åœ°å€çš„æ¯ä¸€ä¸ªæ•´å—ï¼Œè¿½åŠ åˆ°content
             for (int i = 0; i < 4; i ++) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[i], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 text += content;
             }
-            // ¶ÁÒ»¼¶Õ»ËùÔÚµÄ¿éºÅ£¬²¢¶¨Î»µ½Ò»¼¶Õ»£¬¶Á³öÆäÖĞµÄ¶ş¼¶Õ»ËùÔÚµÄ¿éµÄ¿éºÅÊı×é
+            // è¯»ä¸€çº§æ ˆæ‰€åœ¨çš„å—å·ï¼Œå¹¶å®šä½åˆ°ä¸€çº§æ ˆï¼Œè¯»å‡ºå…¶ä¸­çš„äºŒçº§æ ˆæ‰€åœ¨çš„å—çš„å—å·æ•°ç»„
             int mid1BlockId = temp -> dINode.addr[4];
             fseek(f, BLOCK_SIZE * mid1BlockId, SEEK_SET);
             unsigned int blocksInFirstStack[128];
             fread(blocksInFirstStack, BLOCK_SIZE, 1, f);
-            // ¶ÔÓÚÒ»¼¶Õ»ÔªËØÎ»ÖÃ·Ç×îÎ²£¨Æä¶ÔÓ¦µÄ¶ş¼¶Õ»²»¿ÉÄÜ³öÏÖ¿ÕÏ¶£©
+            // å¯¹äºä¸€çº§æ ˆå…ƒç´ ä½ç½®éæœ€å°¾ï¼ˆå…¶å¯¹åº”çš„äºŒçº§æ ˆä¸å¯èƒ½å‡ºç°ç©ºéš™ï¼‰
             for (int i = 0; i < 128 - 1; i ++) {
-                // ¶Á³öÒ»¼¶Õ»ÖĞµÄ¶ş¼¶Õ»ËùÔÚµÄ¿éµÄ¿éºÅ£¬²¢¶¨Î»µ½¶ÔÓ¦¶ş¼¶Õ»£¬¶Á³ö¶ş¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅÊı×é
+                // è¯»å‡ºä¸€çº§æ ˆä¸­çš„äºŒçº§æ ˆæ‰€åœ¨çš„å—çš„å—å·ï¼Œå¹¶å®šä½åˆ°å¯¹åº”äºŒçº§æ ˆï¼Œè¯»å‡ºäºŒçº§æ ˆä¸­çš„ç›´æ¥å—å·æ•°ç»„
                 fseek(f, BLOCK_SIZE * blocksInFirstStack[i], SEEK_SET);
                 unsigned int blocksInSecStack[128];
                 fread(blocksInSecStack, BLOCK_SIZE, 1, f);
                 for (int j = 0; j < 128; j ++) {
-                    // ¶Á³ö¶ş¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅ²¢¶Á³öÆäÖĞÄÚÈİ£¬×·¼Óµ½content
+                    // è¯»å‡ºäºŒçº§æ ˆä¸­çš„ç›´æ¥å—å·å¹¶è¯»å‡ºå…¶ä¸­å†…å®¹ï¼Œè¿½åŠ åˆ°content
                     fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
                     fread(content, BLOCK_SIZE, 1, f);
                     text += content;
                 }
             }
-            // ¶ÔÓÚÒ»¼¶Õ»ÔªËØÎ»ÖÃ×îÎ²£¨Æä¶ÔÓ¦µÄ¶ş¼¶Õ»¿ÉÄÜ³öÏÖ¿ÕÏ¶£©
+            // å¯¹äºä¸€çº§æ ˆå…ƒç´ ä½ç½®æœ€å°¾ï¼ˆå…¶å¯¹åº”çš„äºŒçº§æ ˆå¯èƒ½å‡ºç°ç©ºéš™ï¼‰
             fseek(f, BLOCK_SIZE * blocksInFirstStack[128], SEEK_SET);
             unsigned int blocksInSecStack[128];
             fread(blocksInSecStack, BLOCK_SIZE, 1, f);
-            int blockNumInLastFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 - 127 * 128; // ¼ÆËãÒ»¼¶Õ»ÔªËØÎ»ÖÃ×îÎ²¶ÔÓ¦µÄ¶ş¼¶Õ»Ê¹ÓÃµÄblockNum
+            int blockNumInLastFirstStack = (temp -> dINode.fileSize) / BLOCK_SIZE - 4 - 127 * 128; // è®¡ç®—ä¸€çº§æ ˆå…ƒç´ ä½ç½®æœ€å°¾å¯¹åº”çš„äºŒçº§æ ˆä½¿ç”¨çš„blockNum
             int j = 0;
             for (; j < blockNumInLastFirstStack; j ++) {
-                // ¶Á³ö¶ş¼¶Õ»ÖĞµÄÖ±½Ó¿éºÅ²¢¶Á³öÆäÖĞÄÚÈİ£¬×·¼Óµ½content
+                // è¯»å‡ºäºŒçº§æ ˆä¸­çš„ç›´æ¥å—å·å¹¶è¯»å‡ºå…¶ä¸­å†…å®¹ï¼Œè¿½åŠ åˆ°content
                 fseek(f, BLOCK_SIZE * blocksInSecStack[j], SEEK_SET);
                 fread(content, BLOCK_SIZE, 1, f);
                 text += content;
             }
-            // Èç¹ûÎÄ¼şÓĞ¿éÍâ×Ö½Ú
+            // å¦‚æœæ–‡ä»¶æœ‰å—å¤–å­—èŠ‚
             if (ls > 0) {
                 fseek(f, BLOCK_SIZE * temp -> dINode.addr[j], SEEK_SET);
                 fread(content, ls, 1, f);
@@ -831,8 +890,8 @@ string UnixFIleSys :: getText(INode* temp) {
     }
 }
 
-// ÕûĞÍ
-// È¥µôÍ·Î²¿Õ¸ñ
+// æ•´å‹
+// å»æ‰å¤´å°¾ç©ºæ ¼
 string UnixFIleSys :: trim(string s) {
     if (s.empty())
         return s;
@@ -842,9 +901,9 @@ string UnixFIleSys :: trim(string s) {
 }
 
 
-// ÒµÎñ·½·¨//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Õ¹Ê¾µ±Ç°Ä¿Â¼
-// ÒÀ´Î¶ÁÂ·¾¶Õ»µÄÄÚÈİ£¬×éºÏ³É×Ö·û´®
+// ä¸šåŠ¡æ–¹æ³•//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// å±•ç¤ºå½“å‰ç›®å½•
+// ä¾æ¬¡è¯»è·¯å¾„æ ˆçš„å†…å®¹ï¼Œç»„åˆæˆå­—ç¬¦ä¸²
 string UnixFIleSys :: pwd() {
     string path;
     for (int i = 0; i < ds.size(); i ++) {
@@ -854,23 +913,23 @@ string UnixFIleSys :: pwd() {
     return path;
 }
 
-// ¼ìÑéÎÄ¼şÃû
-// ÔÚµ±Ç°Ä¿Â¼ÏÂ£¬¼ì²éÊÇ·ñÓĞÍ¬ÃûÄ¿Â¼
+// æ£€éªŒæ–‡ä»¶å
+// åœ¨å½“å‰ç›®å½•ä¸‹ï¼Œæ£€æŸ¥æ˜¯å¦æœ‰åŒåç›®å½•
 int UnixFIleSys :: checkFileName(char name[MAX_NAME_SIZE]) {
     int flag = 0;
     FILE *f = fopen(FILE_PATH, "rb");
     if (f == NULL) {
-        cout << "f²»´æÔÚ" << endl;
+        cout << "fä¸å­˜åœ¨" << endl;
         flag = 1;
         return flag;
     } else {
-        //cout << "f´æÔÚ" << endl;
+        //cout << "få­˜åœ¨" << endl;
         Dir d;
         // d.dirNum = 0;
         fseek(f, BLOCK_SIZE * curINode -> dINode.addr[0], SEEK_SET);
         fread(&d, sizeof(Dir), 1, f);
         fclose(f);
-        //cout << "ÏÖÔÚËùÔÚµÄÄ¿Â¼µÄÄ¿Â¼ÏîÊıÎª" << d.dirNum << endl;
+        //cout << "ç°åœ¨æ‰€åœ¨çš„ç›®å½•çš„ç›®å½•é¡¹æ•°ä¸º" << d.dirNum << endl;
         for (int i = 0; i < d.dirNum; i ++)
             if(strcmp(d.direct[i].name, name) == 0)
                 flag = 1;
@@ -878,12 +937,12 @@ int UnixFIleSys :: checkFileName(char name[MAX_NAME_SIZE]) {
     }
 }
 
-// ´´½¨ÎÄ¼ş¼Ğ
-// ±¾ÖÊÊÇ´´½¨½Úµã£¨´óĞ¡ÊÇDirµÄ´óĞ¡£©ºÍÄ¿Â¼Ïî
+// åˆ›å»ºæ–‡ä»¶å¤¹
+// æœ¬è´¨æ˜¯åˆ›å»ºèŠ‚ç‚¹ï¼ˆå¤§å°æ˜¯Dirçš„å¤§å°ï¼‰å’Œç›®å½•é¡¹
 int UnixFIleSys :: mkdir(INode* parent, char name[MAX_NAME_SIZE]) {
-    // cout << "ÄúÒª´´½¨µÄÄ¿Â¼ÃûÊÇ" + name << endl;
+    // cout << "æ‚¨è¦åˆ›å»ºçš„ç›®å½•åæ˜¯" + name << endl;
     bool exist = checkFileName(name);
-    // Ô­¸¸½ÚµãÎª¿Õ
+    // åŸçˆ¶èŠ‚ç‚¹ä¸ºç©º
     if (parent -> dINode.fileSize == 0 && parent -> dINode.mod != 12 && !exist && (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int blockId = getFreeBlock();
         if(blockId < 0)
@@ -928,7 +987,7 @@ int UnixFIleSys :: mkdir(INode* parent, char name[MAX_NAME_SIZE]) {
                 return STATUS_OK;
             }
         }
-    // Ô­¸¸½Úµã²»Îª¿Õ
+    // åŸçˆ¶èŠ‚ç‚¹ä¸ä¸ºç©º
     } else if (parent -> dINode.fileSize != 0 && parent -> dINode.mod != 12 && !exist && (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int iNodeId = getFreeINode();
         if (iNodeId < 0)
@@ -956,8 +1015,8 @@ int UnixFIleSys :: mkdir(INode* parent, char name[MAX_NAME_SIZE]) {
             i.users = parent -> users;
             writeINode(&i);
             Dir dd;
-            readDir(parent -> dINode.addr[0], &dd); // ¶Á³ö¸¸½ÚµãµÄÄ¿Â¼½á¹¹
-            if (dd.dirNum < MAX_DIRECT_NUM) { // Èç¹ûÄ¿Â¼»¹ÄÜ×·¼Ó¾Í×·¼Ó
+            readDir(parent -> dINode.addr[0], &dd); // è¯»å‡ºçˆ¶èŠ‚ç‚¹çš„ç›®å½•ç»“æ„
+            if (dd.dirNum < MAX_DIRECT_NUM) { // å¦‚æœç›®å½•è¿˜èƒ½è¿½åŠ å°±è¿½åŠ 
                 dd.direct[dd.dirNum] = *dt;
                 dd.dirNum ++;
                 writeDir(parent -> dINode.addr[0], &dd);
@@ -977,8 +1036,8 @@ int UnixFIleSys :: mkdir(INode* parent, char name[MAX_NAME_SIZE]) {
     return STATUS_ERROR;
 }
 
-// ÓÃsuperÈ¨ÏŞ´´½¨Ä¿Â¼
-// ±¾ÖÊÊÇ´´½¨½Úµã£¨´óĞ¡ÊÇDirµÄ´óĞ¡£©ºÍÄ¿Â¼Ïî
+// ç”¨superæƒé™åˆ›å»ºç›®å½•
+// æœ¬è´¨æ˜¯åˆ›å»ºèŠ‚ç‚¹ï¼ˆå¤§å°æ˜¯Dirçš„å¤§å°ï¼‰å’Œç›®å½•é¡¹
 int UnixFIleSys :: superMkdir(INode* parent, char name[MAX_NAME_SIZE], unsigned short ownerId, unsigned short groupId) {
     int exist = checkFileName(name);
     if (parent -> dINode.fileSize == 0) {
@@ -1070,8 +1129,8 @@ int UnixFIleSys :: superMkdir(INode* parent, char name[MAX_NAME_SIZE], unsigned 
     return STATUS_ERROR;
 }
 
-// µÇÂ¼
-// ÔÚÈ«¾Ö±äÁ¿OwnersÖĞ²éÕÒ¶ÔÓ¦ÓÃ»§ÃûºÍÃÜÂëµÄÓÃ»§
+// ç™»å½•
+// åœ¨å…¨å±€å˜é‡Ownersä¸­æŸ¥æ‰¾å¯¹åº”ç”¨æˆ·åå’Œå¯†ç çš„ç”¨æˆ·
 int UnixFIleSys :: login() {
     cout << "please input your userName:";
     string userName;
@@ -1083,7 +1142,7 @@ int UnixFIleSys :: login() {
         password[i] = getchar();
         if (password[i] == '\n' && i == 0) i = -1;
         if (i != -1 && password[i] == '\n') {
-            cout << "¼ì²âµ½»»ĞĞ" << endl;
+            cout << "æ£€æµ‹åˆ°æ¢è¡Œ" << endl;
             for (int j = i; j <= 13; j ++) {
                 password[j]='\0';
             }
@@ -1110,7 +1169,7 @@ int UnixFIleSys :: login() {
     return login();
 }
 
-// Ö¸Áî·Ö·¢
+// æŒ‡ä»¤åˆ†å‘
 void UnixFIleSys :: commandDispatcher() {
     cout << endl;
     cout << curOwner -> ownerName << "@UnixFileSystem:~" << pwd() << "$";
@@ -1175,7 +1234,7 @@ void UnixFIleSys :: commandDispatcher() {
             cout << ls() << endl;
             break;
         };
-        // chmod (chmod È¨ÏŞÊı ÎÄ¼şÃû/Ä¿Â¼Ãû)
+        // chmod (chmod æƒé™æ•° æ–‡ä»¶å/ç›®å½•å)
         case 2: {
             string pattern = command.substr(subPos + 1);
             pattern = trim(pattern);
@@ -1556,14 +1615,14 @@ void UnixFIleSys :: commandDispatcher() {
             break;
         };
         // -h
-        case 18: { // ÌáÊ¾Ö¸¶¨ÃüÁîÓÃ·¨
+        case 18: { // æç¤ºæŒ‡å®šå‘½ä»¤ç”¨æ³•
             int subPos = command.find_first_of(" ");
             string c = command.substr(0, subPos);
             help(c);
             break;
         }
         // help
-        case 19: { // ÌáÊ¾ËùÓĞÃüÁîÓÃ·¨
+        case 19: { // æç¤ºæ‰€æœ‰å‘½ä»¤ç”¨æ³•
             displayCommands();
             break;
         }
@@ -1577,93 +1636,93 @@ void UnixFIleSys :: commandDispatcher() {
 
 void UnixFIleSys :: help(string c) {
     if (c == "ls") {
-        cout << "¾ÙÀı£º ls" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÏÔÊ¾µ±Ç°Ä¿Â¼ÏÂµÄÈ«²¿ÎÄ¼ş»òÄ¿Â¼" << endl;
+        cout << "ä¸¾ä¾‹ï¼š ls" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥æ˜¾ç¤ºå½“å‰ç›®å½•ä¸‹çš„å…¨éƒ¨æ–‡ä»¶æˆ–ç›®å½•" << endl;
     } else if (c == "chmod") {
-        cout << "¾ÙÀı£º chmod 1 zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔĞŞ¸Äµ±Ç°Ä¿Â¼ÏÂµÄzjut.txtÎÄ¼şµÄÈ¨ÏŞÎª1£¨½öÖ´ĞĞ£©" << endl;
-        cout << "dir£º 8" << endl;
-        cout << "r  £º 4" << endl;
-        cout << "w  £º 2" << endl;
-        cout << "x  £º 1" << endl;
+        cout << "ä¸¾ä¾‹ï¼š chmod 1 zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥ä¿®æ”¹å½“å‰ç›®å½•ä¸‹çš„zjut.txtæ–‡ä»¶çš„æƒé™ä¸º1ï¼ˆä»…æ‰§è¡Œï¼‰" << endl;
+        cout << "dirï¼š 8" << endl;
+        cout << "r  ï¼š 4" << endl;
+        cout << "w  ï¼š 2" << endl;
+        cout << "x  ï¼š 1" << endl;
     } else if (c == "chown") {
-        cout << "¾ÙÀı£º chowner 2 zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔĞŞ¸Äµ±Ç°Ä¿Â¼ÏÂµÄzjut.txtÎÄ¼şµÄÈ¨ÏŞÎªownerIdÎª2µÄÓÃ»§" << endl;
+        cout << "ä¸¾ä¾‹ï¼š chowner 2 zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥ä¿®æ”¹å½“å‰ç›®å½•ä¸‹çš„zjut.txtæ–‡ä»¶çš„æƒé™ä¸ºownerIdä¸º2çš„ç”¨æˆ·" << endl;
     } else if (c == "chgrp") {
-        cout << "¾ÙÀı£º chgrp 2 zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔĞŞ¸Äµ±Ç°Ä¿Â¼ÏÂµÄzjut.txtÎÄ¼şµÄÎªgroupIdÎª2µÄ×é" << endl;
+        cout << "ä¸¾ä¾‹ï¼š chgrp 2 zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥ä¿®æ”¹å½“å‰ç›®å½•ä¸‹çš„zjut.txtæ–‡ä»¶çš„ä¸ºgroupIdä¸º2çš„ç»„" << endl;
     } else if (c == "pwd") {
-        cout << "¾ÙÀı£º pwd" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÕ¹Ê¾µ±Ç°Â·¾¶" << endl;
+        cout << "ä¸¾ä¾‹ï¼š pwd" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥å±•ç¤ºå½“å‰è·¯å¾„" << endl;
     } else if (c == "cd") {
-        cout << "¾ÙÀı£º cd zjut" << endl;
-        cout << "ÉÏÀı¿ÉÒÔ½øÈëµ±Ç°Ä¿Â¼ÏÂµÄÃûÎªzjutµÄ×ÓÄ¿Â¼" << endl;
+        cout << "ä¸¾ä¾‹ï¼š cd zjut" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥è¿›å…¥å½“å‰ç›®å½•ä¸‹çš„åä¸ºzjutçš„å­ç›®å½•" << endl;
     } else if (c == "mkdir") {
-        cout << "¾ÙÀı£º mkdir zjut" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÔÚµ±Ç°Ä¿Â¼ÏÂ´´½¨zjutÄ¿Â¼£¬µ±ÇÒ½öµ±µ±Ç°ÓÃ»§ÓµÓĞÊÇ¸¸Ä¿Â¼µÄÓµÓĞÕß»òÊÇ¹ÜÀíÔ±" << endl;
+        cout << "ä¸¾ä¾‹ï¼š mkdir zjut" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥åœ¨å½“å‰ç›®å½•ä¸‹åˆ›å»ºzjutç›®å½•ï¼Œå½“ä¸”ä»…å½“å½“å‰ç”¨æˆ·æ‹¥æœ‰æ˜¯çˆ¶ç›®å½•çš„æ‹¥æœ‰è€…æˆ–æ˜¯ç®¡ç†å‘˜" << endl;
     } else if (c == "rmdir") {
-        cout << "¾ÙÀı£º rmdir zjut" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÉ¾³ıµ±Ç°Ä¿Â¼ÏÂ´´½¨zjutÄ¿Â¼£¬²¢ÇÒÉ¾³ızjutÄ¿Â¼ÏÂµÄÈ«²¿ÎÄ¼şºÍÄ¿Â¼" << endl;
+        cout << "ä¸¾ä¾‹ï¼š rmdir zjut" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥åˆ é™¤å½“å‰ç›®å½•ä¸‹åˆ›å»ºzjutç›®å½•ï¼Œå¹¶ä¸”åˆ é™¤zjutç›®å½•ä¸‹çš„å…¨éƒ¨æ–‡ä»¶å’Œç›®å½•" << endl;
     } else if (c == "mv") {
-        cout << "¾ÙÀı£º mv zjut zjut1" << endl;
-        cout << "ÉÏÀı¿ÉÒÔĞŞ¸Äµ±Ç°Ä¿Â¼ÏÂzjutÄ¿Â¼ÃûÎªzjut1" << endl;
+        cout << "ä¸¾ä¾‹ï¼š mv zjut zjut1" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥ä¿®æ”¹å½“å‰ç›®å½•ä¸‹zjutç›®å½•åä¸ºzjut1" << endl;
     } else if (c == "cp") {
-        cout << "¾ÙÀı£º cp zjut.txt zjut1.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔ¸´ÖÆµ±Ç°Ä¿Â¼ÏÂzjut.txtÎÄ¼ş£¬ÔÚµ±Ç°Ä¿Â¼ÏÂÉú³ÉÒ»¸öºÍzjut.txtÄÚÈİÏàÍ¬µÄzjut1.txtÎÄ¼ş" << endl;
+        cout << "ä¸¾ä¾‹ï¼š cp zjut.txt zjut1.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥å¤åˆ¶å½“å‰ç›®å½•ä¸‹zjut.txtæ–‡ä»¶ï¼Œåœ¨å½“å‰ç›®å½•ä¸‹ç”Ÿæˆä¸€ä¸ªå’Œzjut.txtå†…å®¹ç›¸åŒçš„zjut1.txtæ–‡ä»¶" << endl;
     } else if (c == "rm") {
-        cout << "¾ÙÀı£º rm zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÉ¾³ıµ±Ç°Ä¿Â¼ÏÂµÄzjut.txt£¬Èç¹û´æÔÚÈíÁ´½Ó¾Í¼õÈ¥Ò»¸öÈíÁ´½Ó²¢ÇÒÉ¾È¥Ä¿Â¼Ïî" << endl;
+        cout << "ä¸¾ä¾‹ï¼š rm zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥åˆ é™¤å½“å‰ç›®å½•ä¸‹çš„zjut.txtï¼Œå¦‚æœå­˜åœ¨è½¯é“¾æ¥å°±å‡å»ä¸€ä¸ªè½¯é“¾æ¥å¹¶ä¸”åˆ å»ç›®å½•é¡¹" << endl;
     } else if (c == "ln") {
-        cout << "¾ÙÀı£º ln zjut.txt zjut1.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÎªzjut.txt´´½¨Ò»¸öÈíÁ´½Óµ½zjut1.txt" << endl;
+        cout << "ä¸¾ä¾‹ï¼š ln zjut.txt zjut1.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥ä¸ºzjut.txtåˆ›å»ºä¸€ä¸ªè½¯é“¾æ¥åˆ°zjut1.txt" << endl;
     } else if (c == "cat") {
-        cout << "¾ÙÀı£º cat zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÕ¹Ê¾zjut.txtÎÄ¼şµÄÄÚÈİ" << endl;
+        cout << "ä¸¾ä¾‹ï¼š cat zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥å±•ç¤ºzjut.txtæ–‡ä»¶çš„å†…å®¹" << endl;
     } else if (c == "passwd") {
-        cout << "¾ÙÀı£º passwd" << endl;
-        cout << "ÉÏÀı¿ÉÒÔ¸ù¾İºóĞøÏµÍ³ÌáÊ¾ĞŞ¸ÄÃÜÂë" << endl;
+        cout << "ä¸¾ä¾‹ï¼š passwd" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥æ ¹æ®åç»­ç³»ç»Ÿæç¤ºä¿®æ”¹å¯†ç " << endl;
     } else if (c == "touch") {
-        cout << "¾ÙÀı£º touch zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÔÚµ±Ç°Ä¿Â¼ÏÂ´´½¨Ò»¸öÃûÎªzjut.txtµÄÎÄ¼ş" << endl;
+        cout << "ä¸¾ä¾‹ï¼š touch zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥åœ¨å½“å‰ç›®å½•ä¸‹åˆ›å»ºä¸€ä¸ªåä¸ºzjut.txtçš„æ–‡ä»¶" << endl;
     } else if (c == ">>") {
-        cout << "¾ÙÀı£º >> zjut.txt" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÔÚµ±Ç°Ä¿Â¼ÏÂÎªÒ»¸öÃûÎªzjut.txtµÄÎÄ¼ş×·¼ÓÄÚÈİ¡£ÒÔ£ºwq»»ĞĞ½áÊø¡£" << endl;
+        cout << "ä¸¾ä¾‹ï¼š >> zjut.txt" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥åœ¨å½“å‰ç›®å½•ä¸‹ä¸ºä¸€ä¸ªåä¸ºzjut.txtçš„æ–‡ä»¶è¿½åŠ å†…å®¹ã€‚ä»¥ï¼šwqæ¢è¡Œç»“æŸã€‚" << endl;
     } else if (c == "sp") {
-        cout << "¾ÙÀı£º sp" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÕ¹Ê¾´ËÊ±³¬¼¶¿éµÄĞÅÏ¢" << endl;
+        cout << "ä¸¾ä¾‹ï¼š sp" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥å±•ç¤ºæ­¤æ—¶è¶…çº§å—çš„ä¿¡æ¯" << endl;
     } else if (c == "-h") {
-        cout << "¾ÙÀı£º ls -h" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÕ¹Ê¾ÃüÁîlsµÄÊ¹ÓÃ·½·¨" << endl;
+        cout << "ä¸¾ä¾‹ï¼š ls -h" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥å±•ç¤ºå‘½ä»¤lsçš„ä½¿ç”¨æ–¹æ³•" << endl;
     } else if (c == "help") {
-        cout << "¾ÙÀı£º help" << endl;
-        cout << "ÉÏÀı¿ÉÒÔÕ¹Ê¾È«²¿ÃüÁîµÄÊ¹ÓÃ·½·¨" << endl;
+        cout << "ä¸¾ä¾‹ï¼š help" << endl;
+        cout << "ä¸Šä¾‹å¯ä»¥å±•ç¤ºå…¨éƒ¨å‘½ä»¤çš„ä½¿ç”¨æ–¹æ³•" << endl;
     }
     else
         cout<<"Error Command..."<<endl;
 }
 
-// Õ¹Ê¾Ö¸Áî
+// å±•ç¤ºæŒ‡ä»¤
 void UnixFIleSys :: displayCommands() {
-    cout<<"ls		ÏÔÊ¾Ä¿Â¼ÎÄ¼ş"<<endl;
-    cout<<"chmod		¸Ä±äÎÄ¼şÈ¨ÏŞ"<<endl;
-    cout<<"chown		¸Ä±äÎÄ¼şÓµÓĞÕß"<<endl;
-    cout<<"chgrp		¸Ä±äÎÄ¼şËùÊô×é"<<endl;
-    cout<<"pwd		ÏÔÊ¾µ±Ç°Ä¿Â¼"<<endl;
-    cout<<"cd		¸Ä±äµ±Ç°Ä¿Â¼"<<endl;
-    cout<<"mkdir		´´½¨×ÓÄ¿Â¼"<<endl;
-    cout<<"rmdir		É¾³ı×ÓÄ¿Â¼"<<endl;
-    cout<<"mv		¸Ä±äÎÄ¼şÃû"<<endl;
-    cout<<"cp		ÎÄ¼ş¿½±´"<<endl;
-    cout<<"rm		ÎÄ¼şÉ¾³ı"<<endl;
-    cout<<"ln		½¨Á¢ÎÄ¼şÁª½Ó"<<endl;
-    cout<<"cat		Á¬½ÓÏÔÊ¾ÎÄ¼şÄÚÈİ"<<endl;
-    cout<<"passwd		ĞŞ¸ÄÓÃ»§¿ÚÁî"<<endl;
-    cout<<"touch		´´½¨ÎÄ¼ş"<<endl;
-    cout<<">>		ÎÄ±¾ÄÚÈİ×·¼Ó"<<endl;
+    cout<<"ls		æ˜¾ç¤ºç›®å½•æ–‡ä»¶"<<endl;
+    cout<<"chmod		æ”¹å˜æ–‡ä»¶æƒé™"<<endl;
+    cout<<"chown		æ”¹å˜æ–‡ä»¶æ‹¥æœ‰è€…"<<endl;
+    cout<<"chgrp		æ”¹å˜æ–‡ä»¶æ‰€å±ç»„"<<endl;
+    cout<<"pwd		æ˜¾ç¤ºå½“å‰ç›®å½•"<<endl;
+    cout<<"cd		æ”¹å˜å½“å‰ç›®å½•"<<endl;
+    cout<<"mkdir		åˆ›å»ºå­ç›®å½•"<<endl;
+    cout<<"rmdir		åˆ é™¤å­ç›®å½•"<<endl;
+    cout<<"mv		æ”¹å˜æ–‡ä»¶å"<<endl;
+    cout<<"cp		æ–‡ä»¶æ‹·è´"<<endl;
+    cout<<"rm		æ–‡ä»¶åˆ é™¤"<<endl;
+    cout<<"ln		å»ºç«‹æ–‡ä»¶è”æ¥"<<endl;
+    cout<<"cat		è¿æ¥æ˜¾ç¤ºæ–‡ä»¶å†…å®¹"<<endl;
+    cout<<"passwd		ä¿®æ”¹ç”¨æˆ·å£ä»¤"<<endl;
+    cout<<"touch		åˆ›å»ºæ–‡ä»¶"<<endl;
+    cout<<">>		æ–‡æœ¬å†…å®¹è¿½åŠ "<<endl;
 }
 
-// Õ¹Ê¾µ±Ç°Ä¿Â¼ÏÂµÄÈ«²¿Ä¿Â¼ºÍÎÄ¼ş
-// ±éÀúÈ«¾Ö±äÁ¿d£¨µ±Ç°Ä¿Â¼£©£¬´òÓ¡Ã¿Ò»¸öÄ¿Â¼ÏîµÄÃû×Ö
+// å±•ç¤ºå½“å‰ç›®å½•ä¸‹çš„å…¨éƒ¨ç›®å½•å’Œæ–‡ä»¶
+// éå†å…¨å±€å˜é‡dï¼ˆå½“å‰ç›®å½•ï¼‰ï¼Œæ‰“å°æ¯ä¸€ä¸ªç›®å½•é¡¹çš„åå­—
 string UnixFIleSys :: ls() {
     string ls;
     for (int i = 0; i < d -> dirNum; i++) {
@@ -1673,16 +1732,16 @@ string UnixFIleSys :: ls() {
     return ls;
 }
 
-// ½øÈëÄ¿Â¼
-// ±¾ÖÊÊÇÇĞ»»curINode
+// è¿›å…¥ç›®å½•
+// æœ¬è´¨æ˜¯åˆ‡æ¢curINode
 int UnixFIleSys :: cd(char name[MAX_NAME_SIZE]) {
     Direct *dt = new Direct();
-    // ÈôÊÇÒª½øÈëµ±Ç°Ä¿Â¼£¬ÔòºöÊÓÕâ¸ö²Ù×÷
+    // è‹¥æ˜¯è¦è¿›å…¥å½“å‰ç›®å½•ï¼Œåˆ™å¿½è§†è¿™ä¸ªæ“ä½œ
     if (strcmp(name, "./") == 0) {
         delete dt;
         return STATUS_OK;
     } else if (strcmp(name, "../") == 0) {
-    // ÈôÊÇÒª½øÈëÉÏ¼¶²Ù×÷£¬½«È«¾Ö±äÁ¿curINode»»³É¸¸½Úµã£¬Í¬Ê±Â·¾¶Õ»µ¯³ö
+    // è‹¥æ˜¯è¦è¿›å…¥ä¸Šçº§æ“ä½œï¼Œå°†å…¨å±€å˜é‡curINodeæ¢æˆçˆ¶èŠ‚ç‚¹ï¼ŒåŒæ—¶è·¯å¾„æ ˆå¼¹å‡º
         if (curINode -> parent != nullptr) {
             INode *temp = curINode;
             curINode = curINode -> parent;
@@ -1697,7 +1756,7 @@ int UnixFIleSys :: cd(char name[MAX_NAME_SIZE]) {
         return STATUS_OK;
     }
     else {
-    // ½øÈëÄ¿Â¼£ºÍ¨¹ınameÕÒµ½NodeId£¬¶Á³öINode£¬Ğ´µ½curINode
+    // è¿›å…¥ç›®å½•ï¼šé€šè¿‡nameæ‰¾åˆ°NodeIdï¼Œè¯»å‡ºINodeï¼Œå†™åˆ°curINode
         bool dtExist = false;
         for (int i = 0; i < d -> dirNum; i ++)
             if (strcmp(d -> direct[i].name, name) == 0) {
@@ -1727,8 +1786,8 @@ int UnixFIleSys :: cd(char name[MAX_NAME_SIZE]) {
     }
 }
 
-// ¸ü¸ÄÈ¨ÏŞ
-// ±¾ÖÊÊÇĞŞ¸ÄdINodeµÄmodÊôĞÔ
+// æ›´æ”¹æƒé™
+// æœ¬è´¨æ˜¯ä¿®æ”¹dINodeçš„modå±æ€§
 int UnixFIleSys :: chmod(char name[MAX_NAME_SIZE], unsigned int mod)	{
     for (int i = 0; i < d -> dirNum; i ++)
         if (strcmp(d -> direct[i].name, name) == 0) {
@@ -1760,8 +1819,8 @@ int UnixFIleSys :: chmod(char name[MAX_NAME_SIZE], unsigned int mod)	{
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ĞŞ¸ÄÓµÓĞÕß
-// ±¾ÖÊÊÇĞŞ¸ÄdINodeµÄownerIdÊôĞÔ
+// ä¿®æ”¹æ‹¥æœ‰è€…
+// æœ¬è´¨æ˜¯ä¿®æ”¹dINodeçš„ownerIdå±æ€§
 int UnixFIleSys :: chown(char name[MAX_NAME_SIZE], unsigned short ownerId) {
     for (int i = 0; i < d -> dirNum; i ++)
         if (strcmp(d -> direct[i].name, name) == 0) {
@@ -1785,8 +1844,8 @@ int UnixFIleSys :: chown(char name[MAX_NAME_SIZE], unsigned short ownerId) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ĞŞ¸ÄËùÔÚ×é
-// ±¾ÖÊÊÇĞŞ¸ÄdINodeµÄgroupIdÊôĞÔ
+// ä¿®æ”¹æ‰€åœ¨ç»„
+// æœ¬è´¨æ˜¯ä¿®æ”¹dINodeçš„groupIdå±æ€§
 int UnixFIleSys :: chgrp(char name[MAX_NAME_SIZE], unsigned short groupId) {
     for (int i = 0; i < d -> dirNum; i ++)
         if (strcmp(d -> direct[i].name, name) == 0) {
@@ -1810,8 +1869,8 @@ int UnixFIleSys :: chgrp(char name[MAX_NAME_SIZE], unsigned short groupId) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ĞŞ¸ÄÃÜÂë
-// ±¾ÖÊÊÇĞŞ¸ÄOwnersÖĞµÄ¶ÔÓ¦OwnerµÄownerPasswordÊôĞÔ
+// ä¿®æ”¹å¯†ç 
+// æœ¬è´¨æ˜¯ä¿®æ”¹Ownersä¸­çš„å¯¹åº”Ownerçš„ownerPasswordå±æ€§
 int UnixFIleSys :: passwd() {
     cout << "please input your old password:";
     char password[MAX_NAME_SIZE]={0};
@@ -1820,7 +1879,7 @@ int UnixFIleSys :: passwd() {
         password[i] = getchar();
         if (password[i] == '\n' && i == 0) i = -1;
         if (i != -1 && password[i] == '\n') {
-            cout << "¼ì²âµ½»»ĞĞ" << endl;
+            cout << "æ£€æµ‹åˆ°æ¢è¡Œ" << endl;
             for (int j = i; j <= 13; j ++) {
                 password[j]='\0';
             }
@@ -1833,7 +1892,7 @@ int UnixFIleSys :: passwd() {
         i++;
     }
     cout<<endl;
-    // ÑéÖ¤¾ÉÃÜÂëÊÇ·ñÕıÈ·
+    // éªŒè¯æ—§å¯†ç æ˜¯å¦æ­£ç¡®
     if (strcmp(curOwner -> ownerPassword, password) != 0)
         return STATUS_PASSWORD_WRONG;
     else {
@@ -1844,7 +1903,7 @@ int UnixFIleSys :: passwd() {
             password[i1] = getchar();
             if (password[i1] == '\n' && i1 == 0) i1 = -1;
             if (i1 != -1 && password[i1] == '\n') {
-                cout << "¼ì²âµ½»»ĞĞ" << endl;
+                cout << "æ£€æµ‹åˆ°æ¢è¡Œ" << endl;
                 for (int j = i1; j <= 13; j ++) {
                     password[j]='\0';
                 }
@@ -1864,7 +1923,7 @@ int UnixFIleSys :: passwd() {
             password[i2] = getchar();
             if (password[i2] == '\n' && i2 == 0) i2 = -1;
             if (i2 != -1 && password[i2] == '\n') {
-                cout << "¼ì²âµ½»»ĞĞ" << endl;
+                cout << "æ£€æµ‹åˆ°æ¢è¡Œ" << endl;
                 for (int j = i2; j <= 13; j ++) {
                     password[j]='\0';
                 }
@@ -1892,8 +1951,8 @@ int UnixFIleSys :: passwd() {
     return STATUS_ERROR;
 }
 
-// ÖØÃüÃûÎÄ¼ş
-// ±¾ÖÊÊÇĞŞ¸ÄÄ¿Â¼ÏîµÄname
+// é‡å‘½åæ–‡ä»¶
+// æœ¬è´¨æ˜¯ä¿®æ”¹ç›®å½•é¡¹çš„name
 int UnixFIleSys :: mv(char oldName[MAX_NAME_SIZE], char newName[MAX_NAME_SIZE]) {
     for (int i = 0; i < d -> dirNum; i++) {
         if (strcmp(d -> direct[i].name, oldName) == 0) {
@@ -1917,13 +1976,13 @@ int UnixFIleSys :: mv(char oldName[MAX_NAME_SIZE], char newName[MAX_NAME_SIZE]) 
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ĞÂ½¨ÎÄ¼ş
-// ±¾ÖÊÊÇ»ñÈ¡Ò»¸ö¿ÕÏĞ¿é£¨´æÄÚÈİ£©£¬»ñÈ¡Ò»¸öĞÂµÄINode£¨´æÎÄ¼ş»ù´¡ĞÅÏ¢£©£¬È»ºóĞŞ¸ÄÄ¿Â¼
+// æ–°å»ºæ–‡ä»¶
+// æœ¬è´¨æ˜¯è·å–ä¸€ä¸ªç©ºé—²å—ï¼ˆå­˜å†…å®¹ï¼‰ï¼Œè·å–ä¸€ä¸ªæ–°çš„INodeï¼ˆå­˜æ–‡ä»¶åŸºç¡€ä¿¡æ¯ï¼‰ï¼Œç„¶åä¿®æ”¹ç›®å½•
 int UnixFIleSys :: touch(INode* parent, char name[MAX_NAME_SIZE]) {
     bool exist = checkFileName(name);
-    // Èç¹ûÔ­À´µÄdINodeµÄÎÄ¼ş´óĞ¡Îª0£»
-        // »ñÈ¡Ò»¸ö¿ÕÏĞ¿é£¨´æÄÚÈİ£©£¬ÔÚ¸¸dINodeÖĞ×·¼ÓĞÂÎÄ¼şÄÚÈİ´æ´¢µÄ¿éºÅ£»
-        // »ñÈ¡Ò»¸öĞÂµÄINode£¨´æÎÄ¼ş»ù´¡ĞÅÏ¢£©£¬½«INOdeId´æÈëÒ»¸öĞÂµÄÄ¿Â¼Ïî£¬¸üĞÂÄ¿Â¼
+    // å¦‚æœåŸæ¥çš„dINodeçš„æ–‡ä»¶å¤§å°ä¸º0ï¼›
+        // è·å–ä¸€ä¸ªç©ºé—²å—ï¼ˆå­˜å†…å®¹ï¼‰ï¼Œåœ¨çˆ¶dINodeä¸­è¿½åŠ æ–°æ–‡ä»¶å†…å®¹å­˜å‚¨çš„å—å·ï¼›
+        // è·å–ä¸€ä¸ªæ–°çš„INodeï¼ˆå­˜æ–‡ä»¶åŸºç¡€ä¿¡æ¯ï¼‰ï¼Œå°†INOdeIdå­˜å…¥ä¸€ä¸ªæ–°çš„ç›®å½•é¡¹ï¼Œæ›´æ–°ç›®å½•
     if (parent -> dINode.fileSize == 0 && parent -> dINode.mod != 12 && !exist &&
             (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int blockId = getFreeBlock();
@@ -1969,8 +2028,8 @@ int UnixFIleSys :: touch(INode* parent, char name[MAX_NAME_SIZE]) {
                 return STATUS_OK;
             }
         }
-    // Èç¹ûÔ­À´µÄdINodeµÄÎÄ¼ş´óĞ¡²»Îª0
-        // »ñÈ¡Ò»¸öĞÂµÄINode£¨´æÎÄ¼ş»ù´¡ĞÅÏ¢£©£¬½«INOdeId´æÈëÒ»¸öĞÂµÄÄ¿Â¼Ïî£¬¸üĞÂÄ¿Â¼
+    // å¦‚æœåŸæ¥çš„dINodeçš„æ–‡ä»¶å¤§å°ä¸ä¸º0
+        // è·å–ä¸€ä¸ªæ–°çš„INodeï¼ˆå­˜æ–‡ä»¶åŸºç¡€ä¿¡æ¯ï¼‰ï¼Œå°†INOdeIdå­˜å…¥ä¸€ä¸ªæ–°çš„ç›®å½•é¡¹ï¼Œæ›´æ–°ç›®å½•
     } else if (parent -> dINode.fileSize != 0 && parent -> dINode.mod != 12 && !exist &&
             (parent -> dINode.ownerId == curOwner -> ownerId || curOwner -> ownerId == ROOT)) {
         int iNodeId = getFreeINode();
@@ -2023,8 +2082,8 @@ int UnixFIleSys :: touch(INode* parent, char name[MAX_NAME_SIZE]) {
     return STATUS_ERROR;
 }
 
-// ×·¼ÓÄÚÈİ
-// Í¨¹ı±éÀúÄ¿Â¼¶Ô±ÈÎÄ¼şÃûÕÒµ½Ä¿Â¼Ïî£¬ÌáÈ¡INodeId¶Á³öINodeµÄĞÅÏ¢£¬¶ÁÈ¡×·¼ÓµÄ×Ö·ûĞÅÏ¢£¬×·¼Ó
+// è¿½åŠ å†…å®¹
+// é€šè¿‡éå†ç›®å½•å¯¹æ¯”æ–‡ä»¶åæ‰¾åˆ°ç›®å½•é¡¹ï¼Œæå–INodeIdè¯»å‡ºINodeçš„ä¿¡æ¯ï¼Œè¯»å–è¿½åŠ çš„å­—ç¬¦ä¿¡æ¯ï¼Œè¿½åŠ 
 int UnixFIleSys :: textAppend(char name[MAX_NAME_SIZE])	{
     for (int i = 0; i < d -> dirNum; i ++) {
         if (strcmp(d -> direct[i].name, name) == 0) {
@@ -2040,14 +2099,14 @@ int UnixFIleSys :: textAppend(char name[MAX_NAME_SIZE])	{
                 delete temp;
                 return STATUS_READ_ONLY;
             } else {
-                // Èç¹ûÔ­ÎÄ¼ş´óĞ¡ÔÊĞí¼ÌĞø×·¼Ó£¬²»¶ÏµØ¶ÁÈ¡×Ö·û×é³É×Ö·û´®text£¬×·¼Ó
+                // å¦‚æœåŸæ–‡ä»¶å¤§å°å…è®¸ç»§ç»­è¿½åŠ ï¼Œä¸æ–­åœ°è¯»å–å­—ç¬¦ç»„æˆå­—ç¬¦ä¸²textï¼Œè¿½åŠ 
                 if (temp -> dINode.fileSize < FILE_MAX_SIZE) {
                     string text;
                     int j = 0;
                     while (1) {
                         text.push_back(getchar());
                         if (text[j] == 'q' && text[j - 1] == 'w' && text[j - 2] == ':' && text[j - 3] == '\n') {
-                            cout << "¼ì²âµ½»»ĞĞ" << endl;
+                            cout << "æ£€æµ‹åˆ°æ¢è¡Œ" << endl;
                             text.pop_back();
                             text.pop_back();
                             text.pop_back();
@@ -2067,8 +2126,8 @@ int UnixFIleSys :: textAppend(char name[MAX_NAME_SIZE])	{
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ¶ÁÈ¡ÎÄ¼şÄÚÈİ
-// Í¨¹ı±éÀúÄ¿Â¼¶Ô±ÈÎÄ¼şÃûÕÒµ½Ä¿Â¼Ïî£¬ÌáÈ¡INodeId¶Á³öINodeµÄĞÅÏ¢£¬¶ÁÈ¡
+// è¯»å–æ–‡ä»¶å†…å®¹
+// é€šè¿‡éå†ç›®å½•å¯¹æ¯”æ–‡ä»¶åæ‰¾åˆ°ç›®å½•é¡¹ï¼Œæå–INodeIdè¯»å‡ºINodeçš„ä¿¡æ¯ï¼Œè¯»å–
 int UnixFIleSys :: cat(char name[MAX_NAME_SIZE]) {
     for (int i = 0;i < d -> dirNum; i ++)
         if (strcmp(d -> direct[i].name, name) == 0) {
@@ -2090,10 +2149,10 @@ int UnixFIleSys :: cat(char name[MAX_NAME_SIZE]) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-// É¾³ı
-// Í¨¹ı±éÀúÄ¿Â¼¶Ô±ÈÎÄ¼şÃûÕÒµ½Ä¿Â¼Ïî£¬ÌáÈ¡INodeId¶Á³öINodeµÄĞÅÏ¢
-    // Èç¹ûÓĞÈíÁ´½Ó£¬ÔòÉ¾³ıÄ¿Â¼Ïî£¬¶ø²»ÊÇÉ¾³ıÎÄ¼ş
-    // Èç¹ûÎÄ¼ş´óĞ¡Îª0£¬»ØÊÕINodeºóÉ¾³ıÄ¿Â¼Ïî
+// åˆ é™¤
+// é€šè¿‡éå†ç›®å½•å¯¹æ¯”æ–‡ä»¶åæ‰¾åˆ°ç›®å½•é¡¹ï¼Œæå–INodeIdè¯»å‡ºINodeçš„ä¿¡æ¯
+    // å¦‚æœæœ‰è½¯é“¾æ¥ï¼Œåˆ™åˆ é™¤ç›®å½•é¡¹ï¼Œè€Œä¸æ˜¯åˆ é™¤æ–‡ä»¶
+    // å¦‚æœæ–‡ä»¶å¤§å°ä¸º0ï¼Œå›æ”¶INodeååˆ é™¤ç›®å½•é¡¹
 int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
     for (int i = 0; i < d -> dirNum; i ++)
         if (strcmp(d -> direct[i].name, name) == 0) {
@@ -2106,7 +2165,7 @@ int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
             } else if (temp -> dINode.ownerId != curOwner -> ownerId && curOwner -> ownerId != ROOT) {
                 delete temp;
                 return STATUS_BEYOND_RIGHT;
-            // Èç¹ûÓĞÈíÁ´½Ó£¬ÔòÉ¾³ıÄ¿Â¼Ïî£¬¶ø²»ÊÇÉ¾³ıÎÄ¼ş
+            // å¦‚æœæœ‰è½¯é“¾æ¥ï¼Œåˆ™åˆ é™¤ç›®å½•é¡¹ï¼Œè€Œä¸æ˜¯åˆ é™¤æ–‡ä»¶
             } else if (temp -> dINode.linkNum > 0) {
                 temp -> dINode.linkNum --;
                 writeINode(temp);
@@ -2114,7 +2173,7 @@ int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
                 td -> dirNum = d -> dirNum - 1;
                 int k = 0;
                 for (int j = 0; j < d -> dirNum; j ++)
-                    // ¸²¸ÇµôÒªÉ¾³ıµÄÄ¿Â¼Ïî
+                    // è¦†ç›–æ‰è¦åˆ é™¤çš„ç›®å½•é¡¹
                     if (j != i)
                         td -> direct[k ++] = d -> direct[j];
                 writeDir(curINode -> dINode.addr[0], td);
@@ -2126,7 +2185,7 @@ int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
             } else {
                 int bs = temp -> dINode.fileSize / BLOCK_SIZE;
                 int ls = temp -> dINode.fileSize % BLOCK_SIZE;
-                // Èç¹ûÎÄ¼ş´óĞ¡Îª0£¬»ØÊÕINodeºóÉ¾³ıÄ¿Â¼Ïî
+                // å¦‚æœæ–‡ä»¶å¤§å°ä¸º0ï¼Œå›æ”¶INodeååˆ é™¤ç›®å½•é¡¹
                 if (temp -> dINode.fileSize == 0) {
                     returnFreeINode(temp -> nodeId);
                     Dir* td=new Dir();
@@ -2142,7 +2201,7 @@ int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
                     delete dd;
                     return STATUS_OK;
                 } else {
-                // Èç¹ûÎÄ¼ş´óĞ¡²»ÎªÁã£¬Öğ¿é»ØÊÕ£¬ÔÙ»ØÊÕINode£¬×îºóÉ¾³ıÄ¿Â¼Ïî
+                // å¦‚æœæ–‡ä»¶å¤§å°ä¸ä¸ºé›¶ï¼Œé€å—å›æ”¶ï¼Œå†å›æ”¶INodeï¼Œæœ€ååˆ é™¤ç›®å½•é¡¹
                     for (int ii = 0; ii < (ls > 0 ? bs + 1 : bs); ii ++)
                         returnFreeBlock(temp -> dINode.addr[ii]);
                     returnFreeINode(temp -> nodeId);
@@ -2164,14 +2223,14 @@ int UnixFIleSys :: rm(char name[MAX_NAME_SIZE]) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ´´½¨ÈíÁ´½Ó
-// ±¾ÖÊÊÇ´´½¨Ò»¸öĞÂµÄÄ¿Â¼Ïî£¬Ä¿Â¼ÏîÖĞµÄINodeIdÎªsourceÎÄ¼şµÄINodeId
+// åˆ›å»ºè½¯é“¾æ¥
+// æœ¬è´¨æ˜¯åˆ›å»ºä¸€ä¸ªæ–°çš„ç›®å½•é¡¹ï¼Œç›®å½•é¡¹ä¸­çš„INodeIdä¸ºsourceæ–‡ä»¶çš„INodeId
 int UnixFIleSys :: ln(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
     if (strcmp(source, des) == 0)
         return STATUS_SDNAME_OVERLAP;
     else
         for (int i = 0; i < d -> dirNum; i ++)
-            // Í¨¹ıÎÄ¼şÃûÕÒµ½sourceÎÄ¼ş
+            // é€šè¿‡æ–‡ä»¶åæ‰¾åˆ°sourceæ–‡ä»¶
             if(strcmp(d -> direct[i].name, source) == 0) {
                 INode *temp = new INode();
                 temp -> nodeId = d -> direct[i].iNodeId;
@@ -2181,7 +2240,7 @@ int UnixFIleSys :: ln(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
                     return STATUS_BEYOND_RIGHT;
                 } else {
                     for (int j = 0; j < d -> dirNum; j ++)
-                        // Èç¹ûÄ¿±êÎÄ¼şÒÑ¾­´æÔÚ£¬ÏÈÉ¾³ı
+                        // å¦‚æœç›®æ ‡æ–‡ä»¶å·²ç»å­˜åœ¨ï¼Œå…ˆåˆ é™¤
                         if (strcmp(d -> direct[j].name, des) == 0) {
                             INode* t = new INode();
                             t -> nodeId = d -> direct[j].iNodeId;
@@ -2203,7 +2262,7 @@ int UnixFIleSys :: ln(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
                             delete temp;
                             return STATUS_OK;
                         }
-                    // ½¨Á¢Ä¿Â¼Ïî£¬INodeId¶ÔÓ¦±»ÒıÓÃµÄÎÄ¼şµÄINodeId
+                    // å»ºç«‹ç›®å½•é¡¹ï¼ŒINodeIdå¯¹åº”è¢«å¼•ç”¨çš„æ–‡ä»¶çš„INodeId
                     Direct dt;
                     dt.iNodeId = d -> direct[i].iNodeId;
                     strcpy(dt.name, des);
@@ -2217,22 +2276,22 @@ int UnixFIleSys :: ln(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
     return STATUS_FILENAME_NONEXIST;
 }
 
-// É¾³ı£¨ÎÄ¼ş»òÄ¿Â¼£©
-// Í¨¹ı´«ÈëµÄINodeIdÅĞ¶ÏÊ¹ÎÄ¼ş»¹ÊÇÄ¿Â¼£¬É¾³ıµÄ±¾ÖÊÊ¹ÊÇ¹é»¹½ÚµãºÍ¿é
+// åˆ é™¤ï¼ˆæ–‡ä»¶æˆ–ç›®å½•ï¼‰
+// é€šè¿‡ä¼ å…¥çš„INodeIdåˆ¤æ–­ä½¿æ–‡ä»¶è¿˜æ˜¯ç›®å½•ï¼Œåˆ é™¤çš„æœ¬è´¨ä½¿æ˜¯å½’è¿˜èŠ‚ç‚¹å’Œå—
 void UnixFIleSys :: rmIter(unsigned short iNodeId) {
     INode* temp = new INode();
     temp -> nodeId = iNodeId;
     readINode(temp);
-    // Èç¹û´«½øÀ´µÄinodeid¶ÔÓ¦µÄÊÇÎÄ¼ş
+    // å¦‚æœä¼ è¿›æ¥çš„inodeidå¯¹åº”çš„æ˜¯æ–‡ä»¶
     if (temp -> dINode.mod < 8) {
-        // Èç¹ûÁ¬½ÓÊı´óÓÚ0£¬¾Í¼õÉÙÒ»¸öÁ¬½ÓÊı
+        // å¦‚æœè¿æ¥æ•°å¤§äº0ï¼Œå°±å‡å°‘ä¸€ä¸ªè¿æ¥æ•°
         if (temp -> dINode.linkNum > 0) {
             temp -> dINode.linkNum --;
             writeINode(temp);
             delete temp;
         } else {
-        // Èç¹ûÁ¬½ÓÊıÎª0£¬Ö±½ÓÉ¾³ı
-            // ¹é»¹½Úµã
+        // å¦‚æœè¿æ¥æ•°ä¸º0ï¼Œç›´æ¥åˆ é™¤
+            // å½’è¿˜èŠ‚ç‚¹
             returnFreeINode(temp -> nodeId);
             if (temp -> dINode.fileSize != 0) {
                 int bs = temp -> dINode.fileSize / BLOCK_SIZE;
@@ -2243,20 +2302,20 @@ void UnixFIleSys :: rmIter(unsigned short iNodeId) {
             }
         }
     } else {
-    // Èç¹û´«½øÀ´µÄÊÇÄ¿Â¼
-        // Èç¹ûÁ¬½ÓÊı´óÓÚ0£¬¾Í¼õÉÙÒ»¸öÁ¬½ÓÊı
+    // å¦‚æœä¼ è¿›æ¥çš„æ˜¯ç›®å½•
+        // å¦‚æœè¿æ¥æ•°å¤§äº0ï¼Œå°±å‡å°‘ä¸€ä¸ªè¿æ¥æ•°
         if (temp -> dINode.linkNum > 0) {
             temp -> dINode.linkNum --;
             writeINode(temp);
             delete temp;
         } else {
-        // Èç¹ûÁ¬½ÓÊıÎª0£¬Ö±½ÓÉ¾³ı
-            // ¹é»¹½Úµã
+        // å¦‚æœè¿æ¥æ•°ä¸º0ï¼Œç›´æ¥åˆ é™¤
+            // å½’è¿˜èŠ‚ç‚¹
             returnFreeINode(temp -> nodeId);
             if (temp -> dINode.fileSize != 0) {
                 Dir *dd=new Dir();
                 readDir(temp -> dINode.addr[0], dd);
-                // ÉîÈëÄ¿Â¼É¾³ıÃ¿Ò»Ïî
+                // æ·±å…¥ç›®å½•åˆ é™¤æ¯ä¸€é¡¹
                 for (int i = 0; i < dd -> dirNum; i ++)
                     rmIter(dd -> direct[i].iNodeId);
                 returnFreeBlock(temp -> dINode.addr[0]);
@@ -2267,31 +2326,31 @@ void UnixFIleSys :: rmIter(unsigned short iNodeId) {
     }
 }
 
-// É¾³ıÄ¿Â¼
-// ÊµÖÊÊÇ½øÈëÄ¿Â¼É¾³ıÄ¿Â¼ÖĞµÄÄÚÈİ£¨Í¨¹ıÄ¿Â¼ÏîµÄINodeId£©£¬ÔÙÉ¾³ıÄ¿Â¼Ïî£¨ÒÆ¶¯Ö®Ç°µÄÄ¿Â¼Ê¹´ıÉ¾³ıµÄÄ¿Â¼Ïî±»¸²¸Ç£©
+// åˆ é™¤ç›®å½•
+// å®è´¨æ˜¯è¿›å…¥ç›®å½•åˆ é™¤ç›®å½•ä¸­çš„å†…å®¹ï¼ˆé€šè¿‡ç›®å½•é¡¹çš„INodeIdï¼‰ï¼Œå†åˆ é™¤ç›®å½•é¡¹ï¼ˆç§»åŠ¨ä¹‹å‰çš„ç›®å½•ä½¿å¾…åˆ é™¤çš„ç›®å½•é¡¹è¢«è¦†ç›–ï¼‰
 int UnixFIleSys :: rmdir(char name[MAX_NAME_SIZE])	{
     for (int i = 0; i < d -> dirNum; i ++)
-        // ÕÒµ½Ãû×ÖÆ¥ÅäµÄÄ¿Â¼
+        // æ‰¾åˆ°åå­—åŒ¹é…çš„ç›®å½•
         if (strcmp(d -> direct[i].name, name) == 0) {
             INode *temp = new INode();
             temp -> nodeId = d -> direct[i].iNodeId;
             readINode(temp);
-            // ÊÇÎÄ¼ş¾Í±¨´í
+            // æ˜¯æ–‡ä»¶å°±æŠ¥é”™
             if (temp -> dINode.mod < 8) {
                 delete temp;
                 return STATUS_NOT_DIRECT;
-            // È¨ÏŞĞ£ÑéÎ´Í¨¹ı
+            // æƒé™æ ¡éªŒæœªé€šè¿‡
             } else if (temp -> dINode.ownerId != curOwner -> ownerId && curOwner -> ownerId != ROOT) {
                 delete temp;
                 return STATUS_BEYOND_RIGHT;
-            // Í¨¹ıÈ¨ÏŞĞ£Ñé
+            // é€šè¿‡æƒé™æ ¡éªŒ
             } else {
-                // ÉîÈëÄ¿Â¼É¾³ıÃ¿Ò»Ïî
+                // æ·±å…¥ç›®å½•åˆ é™¤æ¯ä¸€é¡¹
                 rmIter(d -> direct[i]. iNodeId);
                 Dir* td = new Dir();
                 td -> dirNum = d -> dirNum - 1;
                 int k = 0;
-                // ¸²¸ÇĞèÒªÉ¾³ıµÄÄ¿Â¼Ïî
+                // è¦†ç›–éœ€è¦åˆ é™¤çš„ç›®å½•é¡¹
                 for (int j = 0; j < d -> dirNum; j ++)
                     if (j != i)
                         td -> direct[k ++] = d -> direct[j];
@@ -2307,8 +2366,8 @@ int UnixFIleSys :: rmdir(char name[MAX_NAME_SIZE])	{
     return STATUS_FILENAME_NONEXIST;
 }
 
-// ¿½±´
-// ĞÂ½¨Ä¿Â¼Ïî£¨nameÊÇÄ¿±êÎÄ¼şÃû£©£¬»ñÈ¡Ò»¸ö¿ÕÏĞINode£¬»ñÈ¡Ò»¸ö¿ÕÏĞ¿é£¨µ÷ÓÃtouch·½·¨£©£¬Ğ´ÈëÄÚÈİ£¨ÄÚÈİÊÇÔ´ÎÄ¼şµÄÄÚÈİ£©
+// æ‹·è´
+// æ–°å»ºç›®å½•é¡¹ï¼ˆnameæ˜¯ç›®æ ‡æ–‡ä»¶åï¼‰ï¼Œè·å–ä¸€ä¸ªç©ºé—²INodeï¼Œè·å–ä¸€ä¸ªç©ºé—²å—ï¼ˆè°ƒç”¨touchæ–¹æ³•ï¼‰ï¼Œå†™å…¥å†…å®¹ï¼ˆå†…å®¹æ˜¯æºæ–‡ä»¶çš„å†…å®¹ï¼‰
 int UnixFIleSys :: cp(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
     if (strcmp(source, des) == 0)
         return STATUS_SDNAME_OVERLAP;
@@ -2329,7 +2388,7 @@ int UnixFIleSys :: cp(char source[MAX_NAME_SIZE], char des[MAX_NAME_SIZE]) {
                     return STATUS_BEYOND_RIGHT;
                 } else {
                     for (int j = 0; j < d -> dirNum; j ++)
-                        // Èç¹ûÄ¿±êÎÄ¼şÒÑ¾­´æÔÚ£¬ÏÈÉ¾³ı
+                        // å¦‚æœç›®æ ‡æ–‡ä»¶å·²ç»å­˜åœ¨ï¼Œå…ˆåˆ é™¤
                         if (d -> direct[j].name == des) {
                             int r1 = rm(des);
                             if (r1 != STATUS_OK) {
